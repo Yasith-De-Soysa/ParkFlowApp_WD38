@@ -1,0 +1,29 @@
+# Root level gitignore
+
+# Node modules
+node_modules/
+*/node_modules/
+
+# Environment files
+.env
+.env.local
+*.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Build artifacts
+dist/
+build/
