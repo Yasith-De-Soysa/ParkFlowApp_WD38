@@ -2,8 +2,10 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
+import mongoose from 'mongoose';
 import { connectDB } from './config/database.js';
 import authRoutes from './routes/authRoutes.js';
+import facilityRoutes from './routes/facilityRoutes.js';
 
 dotenv.config();
 
@@ -26,19 +28,21 @@ app.get('/api/health', (req, res) => {
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/facilities', facilityRoutes);
 // app.use('/api/users', userRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(err.status || 500).json({
+  const status = mongoose.connection.readyState === 1 ? err.status || 500 : 503;
+  res.status(status).json({
     error: {
-      message: err.message,
-      status: err.status || 500,
+      message: status === 503 ? 'Database is unavailable. Please try again shortly.' : err.message,
+      status,
     },
   });
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
 });

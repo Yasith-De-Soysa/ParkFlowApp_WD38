@@ -48,7 +48,11 @@ export default function ProfileScreen({ navigation }: { navigation: any }) {
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.header}>
           <Text style={styles.heading}>My profile</Text>
-          <Pressable accessibilityRole="button" style={styles.editButton}>
+          <Pressable
+            accessibilityRole="button"
+            style={styles.editButton}
+            onPress={() => navigation.navigate('OwnerRegistration')}
+          >
             <Text style={styles.editText}>Edit</Text>
           </Pressable>
         </View>

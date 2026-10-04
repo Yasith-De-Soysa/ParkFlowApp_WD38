@@ -28,7 +28,7 @@ export default function LoginScreen({ navigation }: { navigation: any }) {
     setSubmitting(true);
     try {
       await api.login({ email, password });
-      navigation.replace('Profile');
+      navigation.replace('Home');
     } catch (error: any) {
       const message = error?.response?.data?.error?.message || 'Unable to sign in.';
       Alert.alert('Sign in failed', message);
