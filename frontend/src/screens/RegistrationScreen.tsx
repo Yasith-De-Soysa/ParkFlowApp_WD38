@@ -1,10 +1,14 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import {
   ActivityIndicator,
   Alert,
+  Dimensions,
   Image,
+  Keyboard,
   KeyboardAvoidingView,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   Platform,
   Pressable,
   ScrollView,
@@ -19,6 +23,8 @@ import api from '../services/api';
 type VehicleType = 'Car' | 'Bike';
 
 export default function RegistrationScreen() {
+  const scrollViewRef = useRef<ScrollView>(null);
+  const scrollOffsetRef = useRef(0);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -75,7 +81,17 @@ export default function RegistrationScreen() {
         style={styles.keyboard}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        ref={scrollViewRef}
+        contentContainerStyle={styles.content}
+        onScroll={(event: NativeSyntheticEvent<NativeScrollEvent>) => {
+          scrollOffsetRef.current = event.nativeEvent.contentOffset.y;
+        }}
+        scrollEventThrottle={16}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        automaticallyAdjustKeyboardInsets
+      >
         <View style={styles.form}>
           <View style={styles.header}>
             <Text style={styles.title}>Create your account</Text>
@@ -100,7 +116,14 @@ export default function RegistrationScreen() {
             </Pressable>
           </View>
 
-          <Field label="Name" placeholder="Your full name" value={name} onChangeText={setName} />
+          <Field
+            label="Name"
+            placeholder="Your full name"
+            value={name}
+            onChangeText={setName}
+            scrollViewRef={scrollViewRef}
+            scrollOffsetRef={scrollOffsetRef}
+          />
           <Field
             label="Email"
             placeholder="you@example.com"
@@ -108,6 +131,8 @@ export default function RegistrationScreen() {
             onChangeText={setEmail}
             keyboardType="email-address"
             autoCapitalize="none"
+            scrollViewRef={scrollViewRef}
+            scrollOffsetRef={scrollOffsetRef}
           />
           <Field
             label="Phone"
@@ -115,6 +140,8 @@ export default function RegistrationScreen() {
             value={phone}
             onChangeText={setPhone}
             keyboardType="phone-pad"
+            scrollViewRef={scrollViewRef}
+            scrollOffsetRef={scrollOffsetRef}
           />
 
           <View style={styles.field}>
@@ -142,6 +169,8 @@ export default function RegistrationScreen() {
             value={password}
             onChangeText={setPassword}
             secureTextEntry
+            scrollViewRef={scrollViewRef}
+            scrollOffsetRef={scrollOffsetRef}
           />
           <Field
             label="Confirm password"
@@ -149,6 +178,8 @@ export default function RegistrationScreen() {
             value={confirmPassword}
             onChangeText={setConfirmPassword}
             secureTextEntry
+            scrollViewRef={scrollViewRef}
+            scrollOffsetRef={scrollOffsetRef}
           />
 
           <Pressable
@@ -174,15 +205,53 @@ type FieldProps = {
   keyboardType?: 'default' | 'email-address' | 'phone-pad';
   autoCapitalize?: 'none' | 'sentences';
   secureTextEntry?: boolean;
+  scrollViewRef: React.RefObject<ScrollView | null>;
+  scrollOffsetRef: React.RefObject<number>;
 };
 
-function Field({ label, ...inputProps }: FieldProps) {
+function Field({ label, scrollViewRef, scrollOffsetRef, ...inputProps }: FieldProps) {
+  const inputRef = useRef<TextInput>(null);
+
+  const keepInputVisible = () => {
+    const input = inputRef.current;
+    if (!input) {
+      return;
+    }
+
+    const adjustScroll = () => {
+      const keyboardHeight = Keyboard.metrics()?.height ?? 0;
+      if (!keyboardHeight) {
+        return;
+      }
+
+      input.measureInWindow((_x, y, _width, height) => {
+        const windowHeight = Dimensions.get('window').height;
+        const screenHeight = Dimensions.get('screen').height;
+        const keyboardTop = Math.min(windowHeight, screenHeight - keyboardHeight);
+        const desiredBottom = keyboardTop - 12;
+        const hiddenAmount = y + height - desiredBottom;
+
+        if (hiddenAmount > 0) {
+          scrollViewRef.current?.scrollTo({
+            y: Math.max(0, scrollOffsetRef.current + hiddenAmount),
+            animated: true,
+          });
+        }
+      });
+    };
+
+    setTimeout(adjustScroll, 250);
+    setTimeout(adjustScroll, 500);
+  };
+
   return (
     <View style={styles.field}>
       <Text style={styles.label}>{label}</Text>
       <View style={styles.inputContainer}>
         <TextInput
           {...inputProps}
+          ref={inputRef}
+          onFocus={keepInputVisible}
           style={styles.input}
           placeholderTextColor="#66736f"
           accessibilityLabel={label}
@@ -195,7 +264,7 @@ function Field({ label, ...inputProps }: FieldProps) {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#f4f7f6' },
   keyboard: { flex: 1 },
-  content: { flexGrow: 1, minHeight: '100%' },
+  content: { flexGrow: 1, minHeight: '100%', paddingBottom: 140 },
   form: { paddingHorizontal: 22, paddingTop: 18, paddingBottom: 24, gap: 16 },
   header: { gap: 3 },
   title: { color: '#17201e', fontSize: 22, lineHeight: 27, fontWeight: '700' },

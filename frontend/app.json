@@ -8,6 +8,9 @@
     ],
     "plugins": [
       "expo-status-bar"
-    ]
+    ],
+    "android": {
+      "softwareKeyboardLayoutMode": "resize"
+    }
   }
 }
