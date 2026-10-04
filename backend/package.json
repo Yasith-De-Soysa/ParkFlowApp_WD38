@@ -7,6 +7,7 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
+    "start:mcp": "node src/mcp.js",
     "test": "jest",
     "lint": "eslint ."
   },
@@ -14,6 +15,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@modelcontextprotocol/server": "^2.0.0",
     "express": "^4.18.2",
     "mongoose": "^8.0.0",
     "dotenv": "^16.3.1",
@@ -21,7 +23,8 @@
     "helmet": "^7.1.0",
     "express-validator": "^7.0.0",
     "jsonwebtoken": "^9.0.3",
-    "bcryptjs": "^2.4.3"
+    "bcryptjs": "^2.4.3",
+    "zod": "^4.0.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.2",

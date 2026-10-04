@@ -1,17 +1,71 @@
 import React from 'react';
+import { useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { StatusBar } from 'expo-status-bar';
+import * as NavigationBar from 'expo-navigation-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import HomeScreen from './screens/HomeScreen';
+import RegistrationScreen from './screens/RegistrationScreen';
+import LoginScreen from './screens/LoginScreen';
+import OnboardingScreen from './screens/OnboardingScreen';
 
 const Stack = createNativeStackNavigator();
 
 export default function App() {
+  const [hasOpened, setHasOpened] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    NavigationBar.setVisibilityAsync('visible').catch((error) => {
+      console.error('Unable to show the native navigation bar:', error);
+    });
+
+    AsyncStorage.getItem('parkflow.onboarding.completed')
+      .then((value) => setHasOpened(value === 'true'))
+      .catch((error) => {
+        console.error('Unable to read onboarding state:', error);
+        setHasOpened(false);
+      });
+  }, []);
+
+  if (hasOpened === null) {
+    return null;
+  }
+
   return (
     <SafeAreaProvider>
+      <StatusBar hidden={false} style="auto" />
       <NavigationContainer>
-        <Stack.Navigator initialRouteName="Home">
-          <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'ParkFlow' }} />
+        <Stack.Navigator initialRouteName={hasOpened ? 'Login' : 'Onboarding'}>
+          <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+          <Stack.Screen
+            name="Registration"
+            component={RegistrationScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen name="Onboarding" options={{ headerShown: false }}>
+            {(props) => (
+              <OnboardingScreen
+                {...props}
+                onComplete={async () => {
+                  try {
+                    await AsyncStorage.setItem('parkflow.onboarding.completed', 'true');
+                    props.navigation.replace('Registration');
+                  } catch (error) {
+                    console.error('Unable to save onboarding state:', error);
+                  }
+                }}
+                onLogin={async () => {
+                  try {
+                    await AsyncStorage.setItem('parkflow.onboarding.completed', 'true');
+                    props.navigation.replace('Login');
+                  } catch (error) {
+                    console.error('Unable to save onboarding state:', error);
+                  }
+                }}
+              />
+            )}
+          </Stack.Screen>
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>

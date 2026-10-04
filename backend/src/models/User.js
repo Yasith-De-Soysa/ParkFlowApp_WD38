@@ -21,6 +21,11 @@ const userSchema = new mongoose.Schema(
     phone: {
       type: String,
     },
+    vehicleType: {
+      type: String,
+      enum: ['Car', 'Bike'],
+      required: true,
+    },
     avatar: {
       type: String,
     },

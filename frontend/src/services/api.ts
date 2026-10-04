@@ -42,10 +42,20 @@ class ApiService {
     return this.api.get('/health');
   }
 
-  // Add your API endpoint methods here
-  // public async getUser(userId: string) {
-  //   return this.api.get(`/users/${userId}`);
-  // }
+  public async register(payload: {
+    name: string;
+    email: string;
+    phone: string;
+    password: string;
+    vehicleType: 'Car' | 'Bike';
+    avatar?: string;
+  }) {
+    return this.api.post('/auth/register', payload);
+  }
+
+  public async login(payload: { email: string; password: string }) {
+    return this.api.post('/auth/login', payload);
+  }
 }
 
 export default new ApiService();
