@@ -13,9 +13,16 @@ const userResponse = (user) => ({
   createdAt: user.createdAt,
 });
 
+const avatarUrl = (req) => {
+  if (!req.file) {
+    return undefined;
+  }
+  return `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+};
+
 export const register = async (req, res, next) => {
   try {
-    const { name, email, phone, password, vehicleType, vehicleNumber, avatar } = req.body;
+    const { name, email, phone, password, vehicleType, vehicleNumber } = req.body;
     const normalizedEmail = email?.trim().toLowerCase();
 
     if (!name?.trim() || !normalizedEmail || !phone?.trim() || !password || !vehicleType || !vehicleNumber?.trim()) {
@@ -44,7 +51,7 @@ export const register = async (req, res, next) => {
       password: passwordHash,
       vehicleType,
       vehicleNumber: vehicleNumber.trim(),
-      avatar,
+      avatar: avatarUrl(req),
     });
     const token = jwt.sign({ userId: user._id.toString(), email: user.email }, process.env.JWT_SECRET || 'development-secret', {
       expiresIn: '7d',
@@ -110,7 +117,7 @@ export const getCurrentUser = async (req, res, next) => {
 
 export const updateCurrentUser = async (req, res, next) => {
   try {
-    const { name, email, phone, vehicleType, vehicleNumber, avatar, password, confirmPassword } = req.body;
+    const { name, email, phone, vehicleType, vehicleNumber, password, confirmPassword } = req.body;
     const normalizedEmail = email?.trim().toLowerCase();
 
     if (!name?.trim() || !normalizedEmail || !phone?.trim() || !vehicleType || !vehicleNumber?.trim()) {
@@ -144,7 +151,9 @@ export const updateCurrentUser = async (req, res, next) => {
     user.phone = phone.trim();
     user.vehicleType = vehicleType;
     user.vehicleNumber = vehicleNumber.trim();
-    user.avatar = avatar;
+    if (avatarUrl(req)) {
+      user.avatar = avatarUrl(req);
+    }
     if (password) {
       user.password = await bcrypt.hash(password, 12);
     }

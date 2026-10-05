@@ -51,7 +51,18 @@ class ApiService {
     vehicleNumber: string;
     avatar?: string;
   }) {
-    const response = await this.api.post('/auth/register', payload);
+    const formData = new FormData();
+    formData.append('name', payload.name);
+    formData.append('email', payload.email);
+    formData.append('phone', payload.phone);
+    formData.append('password', payload.password);
+    formData.append('vehicleType', payload.vehicleType);
+    formData.append('vehicleNumber', payload.vehicleNumber);
+    appendImage(formData, payload.avatar);
+
+    const response = await this.api.post('/auth/register', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
     await AsyncStorage.setItem('parkflow.auth.token', response.token);
     return response;
   }
@@ -76,7 +87,19 @@ class ApiService {
     password?: string;
     confirmPassword?: string;
   }) {
-    return this.api.put('/auth/me', payload);
+    const formData = new FormData();
+    formData.append('name', payload.name);
+    formData.append('email', payload.email);
+    formData.append('phone', payload.phone);
+    formData.append('vehicleType', payload.vehicleType);
+    formData.append('vehicleNumber', payload.vehicleNumber);
+    if (payload.password) formData.append('password', payload.password);
+    if (payload.confirmPassword) formData.append('confirmPassword', payload.confirmPassword);
+    appendImage(formData, payload.avatar);
+
+    return this.api.put('/auth/me', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
   }
 
   public async checkFacilityName(name: string) {
@@ -111,6 +134,20 @@ class ApiService {
       status: string;
     }> }>('/facilities', { params: search.trim() ? { q: search.trim() } : undefined });
   }
+}
+
+function appendImage(formData: FormData, uri?: string) {
+  if (!uri || uri.startsWith('http://') || uri.startsWith('https://')) {
+    return;
+  }
+
+  const fileName = uri.split('/').pop() || `avatar-${Date.now()}.jpg`;
+  const extension = fileName.split('.').pop()?.toLowerCase() || 'jpg';
+  formData.append('avatar', {
+    uri,
+    name: fileName,
+    type: `image/${extension === 'jpg' ? 'jpeg' : extension}`,
+  } as any);
 }
 
 export default new ApiService();

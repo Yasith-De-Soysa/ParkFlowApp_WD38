@@ -24,6 +24,7 @@
     "express-validator": "^7.0.0",
     "jsonwebtoken": "^9.0.3",
     "bcryptjs": "^2.4.3",
+    "multer": "^2.0.2",
     "zod": "^4.0.0"
   },
   "devDependencies": {
