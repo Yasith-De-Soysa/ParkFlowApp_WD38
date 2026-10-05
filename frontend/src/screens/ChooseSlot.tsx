@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 interface ChooseSlotProps {
   navigation: {
     goBack: () => void;
+    navigate: (screen: string, params?: Record<string, string>) => void;
   };
 }
 
@@ -108,7 +109,13 @@ export default function ChooseSlot({ navigation }: ChooseSlotProps) {
 
         <Pressable
           accessibilityRole="button"
-          onPress={() => undefined}
+          onPress={() =>
+            navigation.navigate('ConfirmReservation', {
+              date: `${selectedDate} Sep 2026`,
+              slot: selectedSlot,
+              type: slotType,
+            })
+          }
           style={styles.confirmButton}
         >
           <Text style={styles.confirmText}>Confirm Reservation</Text>
