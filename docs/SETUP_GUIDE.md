@@ -25,6 +25,16 @@ cp .env.example .env
 
 Then update `.env` with your MongoDB connection string and other settings.
 
+For the mobile app, create `/frontend/.env` from `/frontend/.env.example` and replace
+`YOUR_COMPUTER_LAN_IP` with the computer's current LAN IPv4 address:
+```bash
+cp .env.example .env
+```
+
+Use the computer's LAN address when running Expo Go on a physical phone. Use
+`10.0.2.2` for an Android emulator or `localhost` for an iOS simulator. Restart
+Expo after changing this value so the new environment variable is bundled.
+
 ### 3. Start MongoDB
 
 Make sure MongoDB is running on your system:
