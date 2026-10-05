@@ -1,0 +1,183 @@
+import React, { useCallback, useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+import axios from 'axios';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../services/api';
+
+type Review = {
+  _id: string;
+  reviewerName: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+};
+
+export default function ReviewsScreen({
+  navigation,
+  route,
+}: {
+  navigation: any;
+  route: { params: { facilityId: string; facilityName: string } };
+}) {
+  const { facilityId, facilityName } = route.params;
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [average, setAverage] = useState(0);
+  const [count, setCount] = useState(0);
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [posting, setPosting] = useState(false);
+
+  const loadReviews = useCallback(async () => {
+    try {
+      const response = await api.getFacilityReviews(facilityId);
+      setReviews(response.reviews);
+      setAverage(response.ratingAverage);
+      setCount(response.ratingCount);
+    } catch (error) {
+      console.error('Unable to load facility reviews:', error);
+      Alert.alert('Unable to load reviews', 'Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }, [facilityId]);
+
+  useEffect(() => {
+    void loadReviews();
+  }, [loadReviews]);
+
+  const postReview = async () => {
+    if (!rating || !comment.trim()) {
+      Alert.alert('Incomplete review', 'Choose a star rating and write a review.');
+      return;
+    }
+    setPosting(true);
+    try {
+      const response = await api.addFacilityReview(facilityId, { rating, comment: comment.trim() });
+      setReviews((current) => [response.review, ...current]);
+      setAverage(response.ratingAverage);
+      setCount(response.ratingCount);
+      setRating(0);
+      setComment('');
+    } catch (error) {
+      const message = axios.isAxiosError(error)
+        ? error.response?.data?.error?.message || 'Unable to post your review.'
+        : 'Unable to post your review.';
+      Alert.alert('Review failed', message);
+    } finally {
+      setPosting(false);
+    }
+  };
+
+  return (
+    <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.header}>
+          <Pressable accessibilityRole="button" onPress={() => navigation.goBack()} style={styles.back}>
+            <Text style={styles.backText}>‹</Text>
+          </Pressable>
+          <View style={styles.headerCopy}>
+            <Text style={styles.title}>Reviews & Ratings</Text>
+            <Text style={styles.subtitle} numberOfLines={1}>{facilityName}</Text>
+          </View>
+        </View>
+
+        <View style={styles.summaryCard}>
+          <Text style={styles.average}>{average ? average.toFixed(1) : '—'}</Text>
+          <View>
+            <Text style={styles.stars}>{renderStars(Math.round(average))}</Text>
+            <Text style={styles.basedOn}>Based on {count} {count === 1 ? 'review' : 'reviews'}</Text>
+          </View>
+        </View>
+
+        <View style={styles.reviewCard}>
+          <Text style={styles.cardTitle}>Leave a review</Text>
+          <View style={styles.ratingPicker}>
+            {[1, 2, 3, 4, 5].map((value) => (
+              <Pressable key={value} onPress={() => setRating(value)} accessibilityLabel={`${value} stars`}>
+                <Text style={styles.pickStar}>{value <= rating ? '★' : '☆'}</Text>
+              </Pressable>
+            ))}
+          </View>
+          <TextInput
+            multiline
+            value={comment}
+            onChangeText={setComment}
+            placeholder="Share your parking experience..."
+            placeholderTextColor="#66736f"
+            style={styles.commentInput}
+            maxLength={500}
+          />
+          <Pressable style={[styles.postButton, posting && styles.disabled]} onPress={() => void postReview()} disabled={posting}>
+            <Text style={styles.postButtonText}>{posting ? 'Posting…' : 'Post Review'}</Text>
+          </Pressable>
+        </View>
+
+        <Text style={styles.recentTitle}>Recent comments</Text>
+        {loading ? (
+          <ActivityIndicator color="#176b58" />
+        ) : reviews.length === 0 ? (
+          <Text style={styles.empty}>No reviews yet. Be the first to share your experience.</Text>
+        ) : (
+          reviews.map((review) => (
+            <View style={styles.commentCard} key={review._id}>
+              <View style={styles.commentHeader}>
+                <Text style={styles.reviewer}>{review.reviewerName} · {renderStars(review.rating)}</Text>
+                <Text style={styles.date}>{formatDate(review.createdAt)}</Text>
+              </View>
+              <Text style={styles.commentText}>{review.comment}</Text>
+            </View>
+          ))
+        )}
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+function renderStars(value: number) {
+  return '★'.repeat(Math.max(0, Math.min(5, value))) + '☆'.repeat(Math.max(0, 5 - value));
+}
+
+function formatDate(value: string) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+const styles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: '#f4f7f6' },
+  content: { padding: 22, paddingBottom: 32, gap: 16 },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 4 },
+  back: { width: 38, height: 38, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: '#e8f4f0' },
+  backText: { color: '#17332c', fontSize: 30, lineHeight: 32, marginTop: -3 },
+  headerCopy: { flex: 1 },
+  title: { color: '#17201e', fontSize: 22, fontWeight: '800' },
+  subtitle: { color: '#66736f', fontSize: 13, marginTop: 3 },
+  summaryCard: { minHeight: 88, padding: 18, flexDirection: 'row', alignItems: 'center', gap: 22, borderRadius: 17, backgroundColor: '#fff' },
+  average: { color: '#000', fontSize: 42, fontWeight: '400' },
+  stars: { color: '#f5ae2d', fontSize: 22, letterSpacing: 1 },
+  basedOn: { color: '#66736f', fontSize: 13, marginTop: 2 },
+  reviewCard: { padding: 16, borderRadius: 17, backgroundColor: '#fff', gap: 13 },
+  cardTitle: { color: '#17201e', fontSize: 16, fontWeight: '800' },
+  ratingPicker: { flexDirection: 'row', gap: 3 },
+  pickStar: { color: '#f5ae2d', fontSize: 29 },
+  commentInput: { height: 74, padding: 12, borderRadius: 13, color: '#17201e', backgroundColor: '#f2f6f4', textAlignVertical: 'top', fontSize: 13 },
+  postButton: { height: 52, alignItems: 'center', justifyContent: 'center', borderRadius: 13, backgroundColor: '#176b58' },
+  postButtonText: { color: '#fff', fontSize: 15, fontWeight: '800' },
+  disabled: { opacity: 0.6 },
+  recentTitle: { color: '#17201e', fontSize: 16, fontWeight: '800', marginTop: 2 },
+  commentCard: { padding: 15, borderRadius: 14, backgroundColor: '#fff', gap: 7 },
+  commentHeader: { gap: 2 },
+  reviewer: { color: '#17201e', fontSize: 13, fontWeight: '800' },
+  date: { color: '#66736f', fontSize: 11 },
+  commentText: { color: '#17201e', fontSize: 13, lineHeight: 19 },
+  empty: { color: '#66736f', paddingVertical: 10 },
+});

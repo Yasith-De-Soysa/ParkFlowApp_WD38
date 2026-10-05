@@ -20,9 +20,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')));
 
-// Connect to MongoDB
-connectDB();
-
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({ status: 'API is running' });
@@ -45,6 +42,16 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on port ${PORT}`);
-});
+const startServer = async () => {
+  try {
+    await connectDB();
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error('Unable to start the API because MongoDB is unavailable:', error.message);
+    process.exitCode = 1;
+  }
+};
+
+void startServer();

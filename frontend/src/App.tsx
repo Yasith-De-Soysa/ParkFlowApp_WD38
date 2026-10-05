@@ -13,6 +13,9 @@ import ProfileScreen from './screens/ProfileScreen';
 import OwnerRegistrationScreen from './screens/OwnerRegistrationScreen';
 import HomeMapScreen from './screens/HomeMapScreen';
 import EditProfileScreen from './screens/EditProfileScreen';
+import ParkingDetailsScreen from './screens/ParkingDetailsScreen';
+import ReviewsScreen from './screens/ReviewsScreen';
+import ParkingProfileScreen from './screens/ParkingProfileScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -44,6 +47,9 @@ export default function App() {
         <Stack.Navigator initialRouteName={hasOpened ? 'Login' : 'Onboarding'}>
           <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
           <Stack.Screen name="Home" component={HomeMapScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="ParkingDetails" component={ParkingDetailsScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="Reviews" component={ReviewsScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="ParkingProfile" component={ParkingProfileScreen} options={{ headerShown: false }} />
           <Stack.Screen name="Profile" component={ProfileScreen} options={{ headerShown: false }} />
           <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ headerShown: false }} />
           <Stack.Screen

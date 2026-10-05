@@ -1,19 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import MapView, { Marker, Region } from 'react-native-maps';
+import { useIsFocused } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import api from '../services/api';
+import { ParkingFacility } from './ParkingDetailsScreen';
 
-type Facility = {
-  _id: string;
-  name: string;
-  address: string;
-  latitude: number;
-  longitude: number;
-  availableSlots: number;
-  carSlots: number;
-  bikeSlots: number;
-};
+type Facility = ParkingFacility;
 
 const fallbackRegion: Region = {
   latitude: 6.9271,
@@ -47,27 +40,37 @@ export default function HomeMapScreen({ navigation }: { navigation: any }) {
   const [loading, setLoading] = useState(true);
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState('');
+  const isFocused = useIsFocused();
+
+  const loadFacilities = useCallback(() => {
+    setLoading(true);
+    api.getFacilities(query)
+      .then((response) => {
+        setFacilities(response.facilities);
+        setError('');
+      })
+      .catch((requestError) => {
+        console.error('Unable to load parking facilities:', requestError);
+        setError('Unable to load parking for this search.');
+      })
+      .finally(() => {
+        setLoading(false);
+        setSearching(false);
+      });
+  }, [query]);
 
   useEffect(() => {
+    if (!isFocused) {
+      return undefined;
+    }
+
     const timer = setTimeout(() => {
       setSearching(Boolean(query.trim()));
-      api.getFacilities(query)
-        .then((response) => {
-          setFacilities(response.facilities);
-          setError('');
-        })
-        .catch((requestError) => {
-          console.error('Unable to search parking facilities:', requestError);
-          setError('Unable to load parking for this search.');
-        })
-        .finally(() => {
-          setLoading(false);
-          setSearching(false);
-        });
+      loadFacilities();
     }, query.trim() ? 350 : 0);
 
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [isFocused, loadFacilities, query]);
 
   return (
     <View style={styles.screen}>
@@ -125,7 +128,13 @@ export default function HomeMapScreen({ navigation }: { navigation: any }) {
           <Text style={styles.empty}>No nearby parking facilities found.</Text>
         ) : (
           facilities.slice(0, 4).map((facility) => (
-            <Pressable key={facility._id} style={styles.card}>
+            <Pressable
+              key={facility._id}
+              style={styles.card}
+              accessibilityRole="button"
+              accessibilityLabel={`View details for ${facility.name}`}
+              onPress={() => navigation.navigate('ParkingDetails', { facility })}
+            >
               <View style={styles.facilitySymbol}><Text style={styles.facilityP}>P</Text></View>
               <View style={styles.facilityInfo}>
                 <Text style={styles.facilityName} numberOfLines={1}>{facility.name}</Text>

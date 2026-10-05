@@ -116,6 +116,8 @@ class ApiService {
     longitude: number;
     carSlots: number;
     bikeSlots: number;
+    carHourlyRate: number;
+    bikeHourlyRate: number;
     imageUri?: string;
   }) {
     return this.api.post('/facilities', payload);
@@ -124,48 +126,58 @@ class ApiService {
   public async getFacilities(search = '') {
     return this.api.get<{ facilities: Array<{
       _id: string;
+      ownerName: string;
+      ownerEmail: string;
+      contactNumber: string;
       name: string;
       address: string;
       latitude: number;
       longitude: number;
       carSlots: number;
       bikeSlots: number;
+      carHourlyRate: number;
+      bikeHourlyRate: number;
       availableSlots: number;
       status: string;
+      imageUri?: string;
+      ratingAverage: number;
+      ratingCount: number;
     }> }>('/facilities', { params: search.trim() ? { q: search.trim() } : undefined });
   }
 
-  public async checkFacilityName(name: string) {
-    return this.api.get<{ available: boolean }>('/facilities/check-name', { params: { name } });
-  }
-
-  public async registerFacility(payload: {
-    ownerName: string;
-    ownerEmail: string;
-    contactNumber: string;
-    name: string;
-    address: string;
-    latitude: number;
-    longitude: number;
-    carSlots: number;
-    bikeSlots: number;
-    imageUri?: string;
-  }) {
-    return this.api.post('/facilities', payload);
-  }
-
-  public async getFacilities(search = '') {
+  public async getOwnerFacilities() {
     return this.api.get<{ facilities: Array<{
       _id: string;
+      ownerName: string;
+      ownerEmail: string;
+      contactNumber: string;
       name: string;
       address: string;
-      latitude: number;
-      longitude: number;
       carSlots: number;
       bikeSlots: number;
+      totalCapacity: number;
       availableSlots: number;
       status: string;
-    }> }>('/facilities', { params: search.trim() ? { q: search.trim() } : undefined });
+      imageUri?: string;
+    }> }>('/facilities/owner/me');
+  }
+
+  public async getFacilityReviews(facilityId: string) {
+    return this.api.get<{
+      reviews: Array<{
+        _id: string;
+        reviewerName: string;
+        rating: number;
+        comment: string;
+        createdAt: string;
+      }>;
+      ratingAverage: number;
+      ratingCount: number;
+    }>(`/facilities/${facilityId}/reviews`);
+  }
+
+  public async addFacilityReview(facilityId: string, payload: { rating: number; comment: string }) {
+    return this.api.post(`/facilities/${facilityId}/reviews`, payload);
   }
 }
 

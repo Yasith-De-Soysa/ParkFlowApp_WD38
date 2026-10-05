@@ -75,6 +75,8 @@ export default function OwnerRegistrationScreen({ navigation }: { navigation: an
   const [contactNumber, setContactNumber] = useState('');
   const [carSlots, setCarSlots] = useState('');
   const [bikeSlots, setBikeSlots] = useState('');
+  const [carHourlyRate, setCarHourlyRate] = useState('');
+  const [bikeHourlyRate, setBikeHourlyRate] = useState('');
   const [imageUri, setImageUri] = useState<string>();
   const [nameAvailability, setNameAvailability] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
   const [submitting, setSubmitting] = useState(false);
@@ -155,6 +157,17 @@ export default function OwnerRegistrationScreen({ navigation }: { navigation: an
       Alert.alert('Invalid email', 'Please enter a valid owner email address.');
       return;
     }
+    if (
+      carHourlyRate.trim() === '' ||
+      bikeHourlyRate.trim() === '' ||
+      !Number.isFinite(Number(carHourlyRate)) ||
+      !Number.isFinite(Number(bikeHourlyRate)) ||
+      Number(carHourlyRate) < 0 ||
+      Number(bikeHourlyRate) < 0
+    ) {
+      Alert.alert('Invalid pricing', 'Please enter valid hourly charges for both car and bike slots.');
+      return;
+    }
     setSubmitting(true);
     try {
       const nameCheck = await api.checkFacilityName(facilityName);
@@ -174,6 +187,8 @@ export default function OwnerRegistrationScreen({ navigation }: { navigation: an
         longitude: coordinate.longitude,
         carSlots: Number(carSlots) || 0,
         bikeSlots: Number(bikeSlots) || 0,
+        carHourlyRate: Number(carHourlyRate),
+        bikeHourlyRate: Number(bikeHourlyRate),
         imageUri,
       });
       Alert.alert('Submitted for review', 'We will verify your facility details before it goes live.', [
@@ -272,6 +287,29 @@ export default function OwnerRegistrationScreen({ navigation }: { navigation: an
               placeholder="00"
               value={bikeSlots}
               onChangeText={setBikeSlots}
+              keyboardType="numeric"
+            />
+          </View>
+        </View>
+
+        <View style={styles.slotRow}>
+          <View style={styles.slot}>
+            <Field
+              label="Car price / hour"
+              icon="$"
+              placeholder="0.00"
+              value={carHourlyRate}
+              onChangeText={setCarHourlyRate}
+              keyboardType="numeric"
+            />
+          </View>
+          <View style={styles.slot}>
+            <Field
+              label="Bike price / hour"
+              icon="$"
+              placeholder="0.00"
+              value={bikeHourlyRate}
+              onChangeText={setBikeHourlyRate}
               keyboardType="numeric"
             />
           </View>
