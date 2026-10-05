@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 interface SecureCheckoutProps {
   navigation: {
     goBack: () => void;
+    navigate: (screen: string) => void;
   };
 }
 
@@ -136,7 +137,7 @@ export default function SecureCheckout({ navigation }: SecureCheckoutProps) {
 
         <Pressable
           accessibilityRole="button"
-          onPress={() => undefined}
+          onPress={() => navigation.navigate('PaymentSuccess')}
           style={styles.payButton}
         >
           <Text style={styles.payText}>Pay $9.00 securely</Text>

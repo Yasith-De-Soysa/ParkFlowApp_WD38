@@ -6,6 +6,7 @@ import HomeScreen from './screens/SelectParking';
 import ChooseSlot from './screens/ChooseSlot';
 import ConfirmReservation from './screens/ConfirmReservation';
 import SecureCheckout from './screens/SecureCheckout';
+import PaymentSuccess from './screens/PaymentSuccess';
 
 const Stack = createNativeStackNavigator();
 
@@ -18,6 +19,7 @@ export default function App() {
           <Stack.Screen name="ChooseSlot" component={ChooseSlot} options={{ headerShown: false }} />
           <Stack.Screen name="ConfirmReservation" component={ConfirmReservation} options={{ headerShown: false }} />
           <Stack.Screen name="SecureCheckout" component={SecureCheckout} options={{ headerShown: false }} />
+          <Stack.Screen name="PaymentSuccess" component={PaymentSuccess} options={{ headerShown: false }} />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>
