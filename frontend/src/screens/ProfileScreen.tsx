@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { ActivityIndicator, Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import api from '../services/api';
 
 type User = {
@@ -56,12 +57,25 @@ export default function ProfileScreen({ navigation }: { navigation: any }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    api.getCurrentUser()
-      .then((response) => setUser(response.user))
-      .catch(() => Alert.alert('Unable to load profile', 'Please sign in again and try once more.'))
-      .finally(() => setLoading(false));
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      setLoading(true);
+      api.getCurrentUser()
+        .then((response) => {
+          if (active) setUser(response.user);
+        })
+        .catch(() => {
+          if (active) Alert.alert('Unable to load profile', 'Please sign in again and try once more.');
+        })
+        .finally(() => {
+          if (active) setLoading(false);
+        });
+      return () => {
+        active = false;
+      };
+    }, []),
+  );
 
   const initials = user?.name
     .split(' ')
@@ -78,7 +92,11 @@ export default function ProfileScreen({ navigation }: { navigation: any }) {
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.header}>
           <Text style={styles.heading}>My profile</Text>
-          <Pressable accessibilityRole="button" style={styles.editButton}>
+          <Pressable
+            accessibilityRole="button"
+            style={styles.editButton}
+            onPress={() => navigation.navigate('EditProfile')}
+          >
             <Text style={styles.editText}>Edit</Text>
           </Pressable>
         </View>

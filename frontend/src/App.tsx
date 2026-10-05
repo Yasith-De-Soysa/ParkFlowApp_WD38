@@ -10,6 +10,9 @@ import RegistrationScreen from './screens/RegistrationScreen';
 import LoginScreen from './screens/LoginScreen';
 import OnboardingScreen from './screens/OnboardingScreen';
 import ProfileScreen from './screens/ProfileScreen';
+import OwnerRegistrationScreen from './screens/OwnerRegistrationScreen';
+import HomeMapScreen from './screens/HomeMapScreen';
+import EditProfileScreen from './screens/EditProfileScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -20,6 +23,7 @@ export default function App() {
     NavigationBar.setVisibilityAsync('visible').catch((error) => {
       console.error('Unable to show the native navigation bar:', error);
     });
+    NavigationBar.setStyle('dark');
 
     AsyncStorage.getItem('parkflow.onboarding.completed')
       .then((value) => setHasOpened(value === 'true'))
@@ -35,11 +39,18 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <StatusBar hidden={false} style="auto" />
+      <StatusBar hidden={false} style="dark" backgroundColor="#f4f7f6" />
       <NavigationContainer>
         <Stack.Navigator initialRouteName={hasOpened ? 'Login' : 'Onboarding'}>
           <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="Home" component={HomeMapScreen} options={{ headerShown: false }} />
           <Stack.Screen name="Profile" component={ProfileScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ headerShown: false }} />
+          <Stack.Screen
+            name="OwnerRegistration"
+            component={OwnerRegistrationScreen}
+            options={{ headerShown: false }}
+          />
           <Stack.Screen
             name="Registration"
             component={RegistrationScreen}

@@ -1,7 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios, { AxiosInstance } from 'axios';
+import { Platform } from 'react-native';
 
-const API_BASE_URL = process.env.REACT_NATIVE_API_BASE_URL || 'http://localhost:5000/api';
+const defaultApiHost = Platform.OS === 'android' ? '10.0.2.2' : 'localhost';
+const API_BASE_URL =
+  process.env.EXPO_PUBLIC_API_BASE_URL ||
+  process.env.REACT_NATIVE_API_BASE_URL ||
+  `http://${defaultApiHost}:5000/api`;
 
 class ApiService {
   private api: AxiosInstance;
@@ -59,6 +64,52 @@ class ApiService {
 
   public async getCurrentUser() {
     return this.api.get('/auth/me');
+  }
+
+  public async updateCurrentUser(payload: {
+    name: string;
+    email: string;
+    phone: string;
+    vehicleType: 'Car' | 'Bike';
+    vehicleNumber: string;
+    avatar?: string;
+    password?: string;
+    confirmPassword?: string;
+  }) {
+    return this.api.put('/auth/me', payload);
+  }
+
+  public async checkFacilityName(name: string) {
+    return this.api.get<{ available: boolean }>('/facilities/check-name', { params: { name } });
+  }
+
+  public async registerFacility(payload: {
+    ownerName: string;
+    ownerEmail: string;
+    contactNumber: string;
+    name: string;
+    address: string;
+    latitude: number;
+    longitude: number;
+    carSlots: number;
+    bikeSlots: number;
+    imageUri?: string;
+  }) {
+    return this.api.post('/facilities', payload);
+  }
+
+  public async getFacilities(search = '') {
+    return this.api.get<{ facilities: Array<{
+      _id: string;
+      name: string;
+      address: string;
+      latitude: number;
+      longitude: number;
+      carSlots: number;
+      bikeSlots: number;
+      availableSlots: number;
+      status: string;
+    }> }>('/facilities', { params: search.trim() ? { q: search.trim() } : undefined });
   }
 }
 

@@ -107,3 +107,51 @@ export const getCurrentUser = async (req, res, next) => {
     return next(error);
   }
 };
+
+export const updateCurrentUser = async (req, res, next) => {
+  try {
+    const { name, email, phone, vehicleType, vehicleNumber, avatar, password, confirmPassword } = req.body;
+    const normalizedEmail = email?.trim().toLowerCase();
+
+    if (!name?.trim() || !normalizedEmail || !phone?.trim() || !vehicleType || !vehicleNumber?.trim()) {
+      return res.status(400).json({ error: { message: 'Name, email, phone, vehicle type, and vehicle number are required.' } });
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      return res.status(400).json({ error: { message: 'Please provide a valid email address.' } });
+    }
+    if (!['Car', 'Bike'].includes(vehicleType)) {
+      return res.status(400).json({ error: { message: 'Vehicle type must be Car or Bike.' } });
+    }
+    if (password && password.length < 6) {
+      return res.status(400).json({ error: { message: 'Password must be at least 6 characters.' } });
+    }
+    if (password && password !== confirmPassword) {
+      return res.status(400).json({ error: { message: 'Passwords do not match.' } });
+    }
+
+    const emailOwner = await User.findOne({ email: normalizedEmail, _id: { $ne: req.user.userId } });
+    if (emailOwner) {
+      return res.status(409).json({ error: { message: 'An account with this email already exists.' } });
+    }
+
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      return res.status(404).json({ error: { message: 'User does not exist.' } });
+    }
+
+    user.name = name.trim();
+    user.email = normalizedEmail;
+    user.phone = phone.trim();
+    user.vehicleType = vehicleType;
+    user.vehicleNumber = vehicleNumber.trim();
+    user.avatar = avatar;
+    if (password) {
+      user.password = await bcrypt.hash(password, 12);
+    }
+    await user.save();
+
+    return res.json({ user: userResponse(user) });
+  } catch (error) {
+    return next(error);
+  }
+};
