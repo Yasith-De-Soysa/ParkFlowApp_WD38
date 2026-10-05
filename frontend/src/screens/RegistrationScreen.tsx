@@ -22,7 +22,7 @@ import api from '../services/api';
 
 type VehicleType = 'Car' | 'Bike';
 
-export default function RegistrationScreen() {
+export default function RegistrationScreen({ navigation }: { navigation: any }) {
   const scrollViewRef = useRef<ScrollView>(null);
   const scrollOffsetRef = useRef(0);
   const [name, setName] = useState('');
@@ -209,6 +209,16 @@ export default function RegistrationScreen() {
           >
             {submitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.registerText}>Register</Text>}
           </Pressable>
+
+          <Pressable
+            accessibilityRole="link"
+            onPress={() => navigation.navigate('Login')}
+            style={styles.signInLink}
+          >
+            <Text style={styles.signInText}>
+              Already registered? <Text style={styles.underlined}>Sign in</Text>
+            </Text>
+          </Pressable>
         </View>
       </ScrollView>
       </KeyboardAvoidingView>
@@ -335,4 +345,7 @@ const styles = StyleSheet.create({
   },
   buttonPressed: { opacity: 0.85 },
   registerText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  signInLink: { alignItems: 'center', paddingVertical: 4 },
+  signInText: { color: '#66736f', fontSize: 13, lineHeight: 16 },
+  underlined: { color: '#176b58', textDecorationLine: 'underline' },
 });
