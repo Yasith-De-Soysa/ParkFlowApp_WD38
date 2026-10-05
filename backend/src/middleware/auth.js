@@ -1,19 +1,18 @@
-// Authentication middleware example
+import jwt from 'jsonwebtoken';
+
 export const authenticate = (req, res, next) => {
   try {
-    const token = req.headers.authorization?.split(' ')[1];
-    
-    if (!token) {
-      return res.status(401).json({ error: 'No token provided' });
+    const authorization = req.headers.authorization;
+    const [scheme, token] = authorization?.split(' ') || [];
+
+    if (scheme !== 'Bearer' || !token) {
+      return res.status(401).json({ error: { message: 'Authentication required.' } });
     }
-    
-    // Verify token here
-    // const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    // req.user = decoded;
-    
+
+    req.user = jwt.verify(token, process.env.JWT_SECRET || 'development-secret');
     next();
   } catch (error) {
-    res.status(401).json({ error: 'Invalid token' });
+    return res.status(401).json({ error: { message: 'Invalid or expired token.' } });
   }
 };
 

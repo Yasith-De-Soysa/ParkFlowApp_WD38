@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios, { AxiosInstance } from 'axios';
 import { Platform } from 'react-native';
 
@@ -14,35 +15,29 @@ class ApiService {
     this.api = axios.create({
       baseURL: API_BASE_URL,
       timeout: 10000,
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
     });
 
-    // Add request interceptor for token
     this.api.interceptors.request.use(
-      (config) => {
-        // Add token from storage if available
-        // const token = await AsyncStorage.getItem('token');
-        // if (token) {
-        //   config.headers.Authorization = `Bearer ${token}`;
-        // }
+      async (config) => {
+        const token = await AsyncStorage.getItem('parkflow.auth.token');
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
         return config;
       },
-      (error) => Promise.reject(error)
+      (error) => Promise.reject(error),
     );
 
-    // Add response interceptor for error handling
     this.api.interceptors.response.use(
       (response) => response.data,
       (error) => {
         console.error('API Error:', error);
         return Promise.reject(error);
-      }
+      },
     );
   }
 
-  // Example endpoint methods
   public async getHealth() {
     return this.api.get('/health');
   }
@@ -53,13 +48,68 @@ class ApiService {
     phone: string;
     password: string;
     vehicleType: 'Car' | 'Bike';
+    vehicleNumber: string;
     avatar?: string;
   }) {
-    return this.api.post('/auth/register', payload);
+    const response = await this.api.post('/auth/register', payload);
+    await AsyncStorage.setItem('parkflow.auth.token', response.token);
+    return response;
   }
 
   public async login(payload: { email: string; password: string }) {
-    return this.api.post('/auth/login', payload);
+    const response = await this.api.post('/auth/login', payload);
+    await AsyncStorage.setItem('parkflow.auth.token', response.token);
+    return response;
+  }
+
+  public async getCurrentUser() {
+    return this.api.get('/auth/me');
+  }
+
+  public async updateCurrentUser(payload: {
+    name: string;
+    email: string;
+    phone: string;
+    vehicleType: 'Car' | 'Bike';
+    vehicleNumber: string;
+    avatar?: string;
+    password?: string;
+    confirmPassword?: string;
+  }) {
+    return this.api.put('/auth/me', payload);
+  }
+
+  public async checkFacilityName(name: string) {
+    return this.api.get<{ available: boolean }>('/facilities/check-name', { params: { name } });
+  }
+
+  public async registerFacility(payload: {
+    ownerName: string;
+    ownerEmail: string;
+    contactNumber: string;
+    name: string;
+    address: string;
+    latitude: number;
+    longitude: number;
+    carSlots: number;
+    bikeSlots: number;
+    imageUri?: string;
+  }) {
+    return this.api.post('/facilities', payload);
+  }
+
+  public async getFacilities(search = '') {
+    return this.api.get<{ facilities: Array<{
+      _id: string;
+      name: string;
+      address: string;
+      latitude: number;
+      longitude: number;
+      carSlots: number;
+      bikeSlots: number;
+      availableSlots: number;
+      status: string;
+    }> }>('/facilities', { params: search.trim() ? { q: search.trim() } : undefined });
   }
 
   public async checkFacilityName(name: string) {

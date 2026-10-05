@@ -26,6 +26,11 @@ const userSchema = new mongoose.Schema(
       enum: ['Car', 'Bike'],
       required: true,
     },
+    vehicleNumber: {
+      type: String,
+      required: true,
+      trim: true,
+    },
     avatar: {
       type: String,
     },
