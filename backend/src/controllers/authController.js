@@ -2,13 +2,24 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { User } from '../models/User.js';
 
+const userResponse = (user) => ({
+  id: user._id,
+  name: user.name,
+  email: user.email,
+  phone: user.phone,
+  vehicleType: user.vehicleType,
+  vehicleNumber: user.vehicleNumber,
+  avatar: user.avatar,
+  createdAt: user.createdAt,
+});
+
 export const register = async (req, res, next) => {
   try {
-    const { name, email, phone, password, vehicleType, avatar } = req.body;
+    const { name, email, phone, password, vehicleType, vehicleNumber, avatar } = req.body;
     const normalizedEmail = email?.trim().toLowerCase();
 
-    if (!name?.trim() || !normalizedEmail || !phone?.trim() || !password || !vehicleType) {
-      return res.status(400).json({ error: { message: 'Name, email, phone, password, and vehicle type are required.' } });
+    if (!name?.trim() || !normalizedEmail || !phone?.trim() || !password || !vehicleType || !vehicleNumber?.trim()) {
+      return res.status(400).json({ error: { message: 'Name, email, phone, password, vehicle type, and vehicle number are required.' } });
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
       return res.status(400).json({ error: { message: 'Please provide a valid email address.' } });
@@ -32,6 +43,7 @@ export const register = async (req, res, next) => {
       phone: phone.trim(),
       password: passwordHash,
       vehicleType,
+      vehicleNumber: vehicleNumber.trim(),
       avatar,
     });
     const token = jwt.sign({ userId: user._id.toString(), email: user.email }, process.env.JWT_SECRET || 'development-secret', {
@@ -40,7 +52,7 @@ export const register = async (req, res, next) => {
 
     return res.status(201).json({
       token,
-      user: { id: user._id, name: user.name, email: user.email, phone: user.phone, vehicleType: user.vehicleType },
+      user: userResponse(user),
     });
   } catch (error) {
     return next(error);
@@ -75,13 +87,22 @@ export const login = async (req, res, next) => {
     return res.json({
       token,
       user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        vehicleType: user.vehicleType,
+        ...userResponse(user),
       },
     });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const getCurrentUser = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      return res.status(404).json({ error: { message: 'User does not exist.' } });
+    }
+
+    return res.json({ user: userResponse(user) });
   } catch (error) {
     return next(error);
   }

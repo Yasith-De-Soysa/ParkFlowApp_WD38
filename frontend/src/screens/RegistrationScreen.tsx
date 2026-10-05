@@ -28,6 +28,7 @@ export default function RegistrationScreen() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [vehicleNumber, setVehicleNumber] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
@@ -35,7 +36,7 @@ export default function RegistrationScreen() {
   const [submitting, setSubmitting] = useState(false);
 
   const register = async () => {
-    if (!name.trim() || !email.trim() || !phone.trim() || !password || !confirmPassword || !vehicleType) {
+    if (!name.trim() || !email.trim() || !phone.trim() || !password || !confirmPassword || !vehicleType || !vehicleNumber.trim()) {
       Alert.alert('Complete your details', 'Please fill in every field to register.');
       return;
     }
@@ -46,7 +47,15 @@ export default function RegistrationScreen() {
 
     setSubmitting(true);
     try {
-      await api.register({ name, email, phone, password, vehicleType, avatar: profilePhoto || undefined });
+      await api.register({
+        name,
+        email,
+        phone,
+        password,
+        vehicleType,
+        vehicleNumber,
+        avatar: profilePhoto || undefined,
+      });
       Alert.alert('Account created', 'Your ParkFlow account is ready.');
     } catch (error: any) {
       const message = error?.response?.data?.error?.message || 'Unable to create your account.';
@@ -164,6 +173,16 @@ export default function RegistrationScreen() {
           </View>
 
           <Field
+            label="Vehicle number"
+            placeholder="e.g. ABC 1234"
+            value={vehicleNumber}
+            onChangeText={setVehicleNumber}
+            autoCapitalize="characters"
+            scrollViewRef={scrollViewRef}
+            scrollOffsetRef={scrollOffsetRef}
+          />
+
+          <Field
             label="Password"
             placeholder="••••••••"
             value={password}
@@ -203,7 +222,7 @@ type FieldProps = {
   value: string;
   onChangeText: (value: string) => void;
   keyboardType?: 'default' | 'email-address' | 'phone-pad';
-  autoCapitalize?: 'none' | 'sentences';
+  autoCapitalize?: 'none' | 'sentences' | 'characters';
   secureTextEntry?: boolean;
   scrollViewRef: React.RefObject<ScrollView | null>;
   scrollOffsetRef: React.RefObject<number>;

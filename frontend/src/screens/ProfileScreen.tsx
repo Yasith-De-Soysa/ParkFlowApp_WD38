@@ -1,6 +1,17 @@
-import React from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import api from '../services/api';
+
+type User = {
+  name: string;
+  email: string;
+  phone: string;
+  vehicleType: 'Car' | 'Bike';
+  vehicleNumber: string;
+  avatar?: string;
+  createdAt?: string;
+};
 
 type DetailProps = {
   icon: string;
@@ -42,6 +53,25 @@ function Tab({ icon, label, active, onPress }: TabProps) {
 
 export default function ProfileScreen({ navigation }: { navigation: any }) {
   const insets = useSafeAreaInsets();
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.getCurrentUser()
+      .then((response) => setUser(response.user))
+      .catch(() => Alert.alert('Unable to load profile', 'Please sign in again and try once more.'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const initials = user?.name
+    .split(' ')
+    .map((part) => part[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase() || '?';
+  const memberSince = user?.createdAt
+    ? `Member since ${new Date(user.createdAt).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}`
+    : '';
 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
@@ -54,19 +84,29 @@ export default function ProfileScreen({ navigation }: { navigation: any }) {
         </View>
 
         <View style={styles.identityCard}>
-          <View style={styles.avatar}>
-            <Text style={styles.initials}>AM</Text>
-          </View>
+          {loading ? (
+            <ActivityIndicator color="#176b58" />
+          ) : user?.avatar ? (
+            <Image source={{ uri: user.avatar }} style={styles.avatar} />
+          ) : (
+            <View style={styles.avatar}>
+              <Text style={styles.initials}>{initials}</Text>
+            </View>
+          )}
           <View style={styles.identity}>
-            <Text style={styles.name}>Alex Morgan</Text>
-            <Text style={styles.memberSince}>Member since March 2025</Text>
+            <Text style={styles.name}>{user?.name || 'Your profile'}</Text>
+            {!!memberSince && <Text style={styles.memberSince}>{memberSince}</Text>}
           </View>
         </View>
 
         <View style={styles.detailsCard}>
-          <Detail icon="✉" label="Email" value="alex.morgan@example.com" />
-          <Detail icon="⌕" label="Phone" value="+1 (415) 555-0148" />
-          <Detail icon="▱" label="Vehicle" value="Silver Honda Civic · 8KDL219" />
+          <Detail icon="✉" label="Email" value={user?.email || 'Unavailable'} />
+          <Detail icon="⌕" label="Phone" value={user?.phone || 'Unavailable'} />
+          <Detail
+            icon="▱"
+            label="Vehicle"
+            value={user ? `${user.vehicleType} · ${user.vehicleNumber}` : 'Unavailable'}
+          />
         </View>
       </ScrollView>
 
