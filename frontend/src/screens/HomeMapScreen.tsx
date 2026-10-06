@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import * as Location from 'expo-location';
 import MapView, { Marker, Region } from 'react-native-maps';
 import { useIsFocused } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -41,7 +42,35 @@ export default function HomeMapScreen({ navigation, route }: { navigation: any; 
   const [loading, setLoading] = useState(true);
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState('');
+  const [locationPermission, setLocationPermission] = useState<Location.PermissionStatus | null>(null);
+  const [locationLoading, setLocationLoading] = useState(false);
   const isFocused = useIsFocused();
+
+  const locateMe = useCallback(async () => {
+    setLocationLoading(true);
+    try {
+      const permission = await Location.requestForegroundPermissionsAsync();
+      setLocationPermission(permission.status);
+      if (permission.status !== Location.PermissionStatus.GRANTED) {
+        return;
+      }
+
+      const current = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      setRegion((previous) => ({
+        ...previous,
+        latitude: current.coords.latitude,
+        longitude: current.coords.longitude,
+        latitudeDelta: 0.025,
+        longitudeDelta: 0.025,
+      }));
+    } catch (locationError) {
+      console.error('Unable to get the phone location:', locationError);
+    } finally {
+      setLocationLoading(false);
+    }
+  }, []);
 
   const loadFacilities = useCallback(() => {
     setLoading(true);
@@ -65,21 +94,23 @@ export default function HomeMapScreen({ navigation, route }: { navigation: any; 
       return undefined;
     }
 
+    void locateMe();
+
     const timer = setTimeout(() => {
       setSearching(Boolean(query.trim()));
       loadFacilities();
     }, query.trim() ? 350 : 0);
 
     return () => clearTimeout(timer);
-  }, [isFocused, loadFacilities, query]);
+  }, [isFocused, loadFacilities, locateMe, query]);
 
   return (
     <View style={styles.screen}>
       <MapView
         style={[styles.map, { top: insets.top, bottom: insets.bottom }]}
-        initialRegion={fallbackRegion}
+        region={region}
         onRegionChangeComplete={setRegion}
-        showsUserLocation
+        showsUserLocation={locationPermission === Location.PermissionStatus.GRANTED}
         showsMyLocationButton
         showsCompass
         mapType="standard"
@@ -119,6 +150,22 @@ export default function HomeMapScreen({ navigation, route }: { navigation: any; 
           />
         </View>
       </View>
+
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Use my current location"
+        onPress={() => void locateMe()}
+        style={[styles.locationButton, { top: insets.top + 136 }]}
+      >
+        {locationLoading ? <ActivityIndicator color="#176b58" /> : <Text style={styles.locationButtonText}>◎</Text>}
+        <Text style={styles.locationButtonLabel}>My location</Text>
+      </Pressable>
+
+      {locationPermission && locationPermission !== Location.PermissionStatus.GRANTED ? (
+        <View style={[styles.locationNotice, { top: insets.top + 190 }]}>
+          <Text style={styles.locationNoticeText}>Location access is off. Parking is shown around Colombo.</Text>
+        </View>
+      ) : null}
 
       <View style={[styles.cards, { bottom: insets.bottom + 15 + 72 + 12 }]}>
         {loading || searching ? (
@@ -193,6 +240,11 @@ const styles = StyleSheet.create({
   search: { height: 50, borderRadius: 12, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#fff', shadowColor: '#17332c', shadowOpacity: 0.08, shadowRadius: 9, elevation: 3 },
   searchIcon: { color: '#66736f', fontSize: 24 },
   searchInput: { flex: 1, color: '#17201e', fontSize: 15, paddingVertical: 0 },
+  locationButton: { position: 'absolute', right: 17, height: 42, paddingHorizontal: 12, borderRadius: 21, flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: '#fff', shadowColor: '#17332c', shadowOpacity: 0.12, shadowRadius: 8, elevation: 4 },
+  locationButtonText: { color: '#176b58', fontSize: 22, lineHeight: 24 },
+  locationButtonLabel: { color: '#176b58', fontSize: 12, fontWeight: '700' },
+  locationNotice: { position: 'absolute', left: 17, right: 17, paddingHorizontal: 12, paddingVertical: 9, borderRadius: 10, backgroundColor: '#fff8e7', borderWidth: 1, borderColor: '#f4b740' },
+  locationNoticeText: { color: '#6b551f', fontSize: 12 },
   marker: { alignItems: 'center' },
   slotBubble: { paddingHorizontal: 10, paddingVertical: 7, borderRadius: 999, backgroundColor: '#176b58' },
   slotText: { color: '#fff', fontSize: 12, fontWeight: '700' },

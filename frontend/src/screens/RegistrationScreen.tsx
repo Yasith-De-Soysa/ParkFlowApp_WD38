@@ -324,18 +324,6 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   input: { flex: 1, color: '#17201e', fontSize: 15, paddingVertical: 0 },
-  options: { flexDirection: 'row', gap: 10 },
-  option: {
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: '#dde5e2',
-    backgroundColor: '#fff',
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-  },
-  selectedOption: { backgroundColor: '#176b58', borderColor: '#176b58' },
-  optionText: { color: '#17201e', fontSize: 13, fontWeight: '600' },
-  selectedOptionText: { color: '#fff' },
   registerButton: {
     height: 52,
     borderRadius: 12,

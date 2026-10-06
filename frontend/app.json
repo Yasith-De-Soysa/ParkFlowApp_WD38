@@ -7,6 +7,12 @@
       "**/*"
     ],
     "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow ParkFlow to use your location to show nearby parking."
+        }
+      ],
       "expo-status-bar"
     ],
     "android": {
