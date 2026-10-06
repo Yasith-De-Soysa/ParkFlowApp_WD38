@@ -135,7 +135,7 @@ export default function OwnerManageScreen({ navigation }: { navigation: any }) {
         )}
       </ScrollView>
 
-      <View style={[styles.bottomNav, { bottom: insets.bottom + 14 }]}>
+      <View style={[styles.bottomNav, { bottom: insets.bottom + 15 }]}>
         <OwnerNavItem icon="⌕" label="Explore" onPress={() => navigation.navigate('OwnerHome')} />
         <OwnerNavItem icon="▦" label="Manage" active />
         <OwnerNavItem icon="P" label="Parking profile" onPress={() => navigation.navigate('ParkingProfile')} />
@@ -225,30 +225,12 @@ const styles = StyleSheet.create({
   primaryButton: { height: 52, borderRadius: 12, backgroundColor: '#176b58', alignItems: 'center', justifyContent: 'center' },
   primaryButtonText: { color: '#fff', fontSize: 15, fontWeight: '800' },
   buttonPressed: { opacity: 0.85 },
-  bottomNav: {
-    position: 'absolute',
-    left: 12,
-    right: 12,
-    height: 76,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderTopWidth: 1,
-    borderColor: '#dde5e2',
-    borderRadius: 16,
-    backgroundColor: '#fff',
-    shadowColor: '#17332c',
-    shadowOpacity: 0.08,
-    shadowRadius: 9,
-    elevation: 3,
-  },
-  navItem: { width: 100, alignItems: 'center', gap: 4 },
-  navIcon: { width: 36, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: '#f4f7f6' },
-  activeNavIcon: { backgroundColor: '#e8f4f0' },
-  navIconText: { color: '#66736f', fontSize: 20, fontWeight: '700' },
-  activeNavIconText: { color: '#176b58' },
-  navLabel: { color: '#66736f', fontSize: 11, fontWeight: '600' },
-  activeNavLabel: { color: '#176b58', fontWeight: '800' },
+  bottomNav: { position: 'absolute', left: 17, right: 17, height: 72, paddingHorizontal: 16, paddingVertical: 10, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderRadius: 20, borderWidth: 1, borderColor: '#dde5e2', backgroundColor: '#fff', shadowColor: '#17332c', shadowOpacity: 0.08, shadowRadius: 9, elevation: 3 },
+  navItem: { width: '31%', alignItems: 'center', gap: 4 },
+  navIcon: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: '#f4f7f6' },
+  activeNavIcon: { backgroundColor: '#176b58' },
+  navIconText: { color: '#66736f', fontSize: 18 },
+  activeNavIconText: { color: '#fff' },
+  navLabel: { color: '#66736f', fontSize: 12 },
+  activeNavLabel: { color: '#176b58', fontWeight: '600' },
 });
