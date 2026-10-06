@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import * as Location from 'expo-location';
-import MapView, { Marker, Region } from 'react-native-maps';
+import { Region } from 'react-native-maps';
 import { useIsFocused } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import api from '../services/api';
 import { ParkingFacility } from './ParkingDetailsScreen';
+import OpenStreetMapView from '../components/OpenStreetMapView';
 
 type Facility = ParkingFacility;
 
@@ -44,6 +45,7 @@ export default function HomeMapScreen({ navigation, route }: { navigation: any; 
   const [error, setError] = useState('');
   const [locationPermission, setLocationPermission] = useState<Location.PermissionStatus | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number }>();
   const isFocused = useIsFocused();
 
   const locateMe = useCallback(async () => {
@@ -58,6 +60,7 @@ export default function HomeMapScreen({ navigation, route }: { navigation: any; 
       const current = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.Balanced,
       });
+      setUserLocation({ latitude: current.coords.latitude, longitude: current.coords.longitude });
       setRegion((previous) => ({
         ...previous,
         latitude: current.coords.latitude,
@@ -106,30 +109,26 @@ export default function HomeMapScreen({ navigation, route }: { navigation: any; 
 
   return (
     <View style={styles.screen}>
-      <MapView
-        style={[styles.map, { top: insets.top, bottom: insets.bottom }]}
-        region={region}
-        onRegionChangeComplete={setRegion}
-        showsUserLocation={locationPermission === Location.PermissionStatus.GRANTED}
-        showsMyLocationButton
-        showsCompass
-        mapType="standard"
-        zoomEnabled
-        scrollEnabled
-        rotateEnabled
-        zoomControlEnabled
-      >
-        {facilities.map((facility) => (
-          <Marker
-            key={facility._id}
-            coordinate={{ latitude: facility.latitude, longitude: facility.longitude }}
-            title={facility.name}
-            description={`${facility.availableSlots} slots available`}
-          >
-            <ParkingMarker slots={facility.availableSlots} />
-          </Marker>
-        ))}
-      </MapView>
+      <View style={[styles.map, { top: insets.top, bottom: insets.bottom }]}>
+        <OpenStreetMapView
+          latitude={region.latitude}
+          longitude={region.longitude}
+          latitudeDelta={region.latitudeDelta}
+          longitudeDelta={region.longitudeDelta}
+          userLocation={userLocation}
+          points={facilities.map((facility) => ({
+            id: facility._id,
+            latitude: facility.latitude,
+            longitude: facility.longitude,
+            title: facility.name,
+            description: `${facility.availableSlots} slots available`,
+          }))}
+          onPointPress={(facilityId) => {
+            const facility = facilities.find((item) => item._id === facilityId);
+            if (facility) navigation.navigate('ParkingDetails', { facility });
+          }}
+        />
+      </View>
 
       <View style={[styles.controls, { top: insets.top + 15 }]}>
         <View style={styles.greeting}>

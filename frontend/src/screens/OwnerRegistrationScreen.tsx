@@ -3,6 +3,7 @@ import {
   Alert,
   Modal,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -87,12 +88,18 @@ export default function OwnerRegistrationScreen({ navigation }: { navigation: an
   });
 
   const openLocationPicker = async () => {
-    const permission = await Location.requestForegroundPermissionsAsync();
-    if (permission.status === 'granted') {
+    setMapVisible(true);
+    try {
+      const permission = await Location.requestForegroundPermissionsAsync();
+      if (permission.status !== 'granted') {
+        return;
+      }
+
       const current = await Location.getCurrentPositionAsync({});
       setCoordinate(current.coords);
+    } catch (error) {
+      console.error('Unable to get current location for facility picker:', error);
     }
-    setMapVisible(true);
   };
 
   const updateLocation = async (nextCoordinate: Coordinate) => {
@@ -206,7 +213,11 @@ export default function OwnerRegistrationScreen({ navigation }: { navigation: an
 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
-      <View style={styles.content}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.header}>
           <Pressable accessibilityRole="button" onPress={() => navigation.goBack()} style={styles.back}>
             <Text style={styles.backText}>‹</Text>
@@ -245,13 +256,20 @@ export default function OwnerRegistrationScreen({ navigation }: { navigation: an
         {nameAvailability === 'checking' && <Text style={styles.validationText}>Checking availability…</Text>}
         {nameAvailability === 'taken' && <Text style={styles.errorText}>This parking lot name already exists.</Text>}
         {nameAvailability === 'available' && <Text style={styles.successText}>This parking lot name is available.</Text>}
-        <Field
-          label="Address"
-          icon="⌖"
-          placeholder="Select parking location on map"
-          value={address}
-          onPress={openLocationPicker}
-        />
+        <View style={styles.field}>
+          <Text style={styles.fieldLabel}>Address</Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Select parking location on map"
+            onPress={() => void openLocationPicker()}
+            style={styles.input}
+          >
+            <Text style={styles.inputIcon}>⌖</Text>
+            <Text style={[styles.inputText, !address && styles.placeholderText]}>
+              {address || 'Select parking location on map'}
+            </Text>
+          </Pressable>
+        </View>
         <Field
           label="Owner email"
           icon="@"
@@ -321,7 +339,7 @@ export default function OwnerRegistrationScreen({ navigation }: { navigation: an
         <Pressable onPress={() => void submit()} style={[styles.primaryButton, submitting && styles.disabledButton]} disabled={submitting}>
           <Text style={styles.primaryText}>{submitting ? 'Submitting…' : 'Register Parking Facility'}</Text>
         </Pressable>
-      </View>
+      </ScrollView>
 
       <Modal visible={mapVisible} animationType="slide" onRequestClose={() => setMapVisible(false)}>
         <SafeAreaView style={styles.mapScreen}>
@@ -361,7 +379,7 @@ export default function OwnerRegistrationScreen({ navigation }: { navigation: an
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#f4f7f6' },
-  content: { flex: 1, paddingHorizontal: 22, paddingTop: 18, paddingBottom: 24, gap: 14 },
+  content: { flexGrow: 1, paddingHorizontal: 22, paddingTop: 18, paddingBottom: 32, gap: 14 },
   header: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   back: {
     width: 36,
@@ -401,6 +419,7 @@ const styles = StyleSheet.create({
   },
   inputIcon: { width: 18, color: '#66736f', fontSize: 19, textAlign: 'center' },
   inputText: { flex: 1, color: '#17201e', fontSize: 15, paddingVertical: 0 },
+  placeholderText: { color: '#66736f' },
   validationText: { color: '#66736f', fontSize: 12, marginTop: -8 },
   errorText: { color: '#b42318', fontSize: 12, marginTop: -8 },
   successText: { color: '#176b58', fontSize: 12, marginTop: -8 },
