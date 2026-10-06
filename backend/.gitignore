@@ -33,3 +33,7 @@ Thumbs.db
 # MongoDB
 .mongodb/
 mongo_data/
+
+# Uploaded user images
+uploads/*
+!uploads/.gitkeep

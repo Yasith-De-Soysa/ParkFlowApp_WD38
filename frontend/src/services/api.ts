@@ -51,7 +51,18 @@ class ApiService {
     vehicleNumber: string;
     avatar?: string;
   }) {
-    const response = await this.api.post('/auth/register', payload);
+    const formData = new FormData();
+    formData.append('name', payload.name);
+    formData.append('email', payload.email);
+    formData.append('phone', payload.phone);
+    formData.append('password', payload.password);
+    formData.append('vehicleType', payload.vehicleType);
+    formData.append('vehicleNumber', payload.vehicleNumber);
+    appendImage(formData, payload.avatar);
+
+    const response = await this.api.post('/auth/register', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
     await AsyncStorage.setItem('parkflow.auth.token', response.token);
     return response;
   }
@@ -76,7 +87,19 @@ class ApiService {
     password?: string;
     confirmPassword?: string;
   }) {
-    return this.api.put('/auth/me', payload);
+    const formData = new FormData();
+    formData.append('name', payload.name);
+    formData.append('email', payload.email);
+    formData.append('phone', payload.phone);
+    formData.append('vehicleType', payload.vehicleType);
+    formData.append('vehicleNumber', payload.vehicleNumber);
+    if (payload.password) formData.append('password', payload.password);
+    if (payload.confirmPassword) formData.append('confirmPassword', payload.confirmPassword);
+    appendImage(formData, payload.avatar);
+
+    return this.api.put('/auth/me', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
   }
 
   public async checkFacilityName(name: string) {
@@ -93,6 +116,8 @@ class ApiService {
     longitude: number;
     carSlots: number;
     bikeSlots: number;
+    carHourlyRate: number;
+    bikeHourlyRate: number;
     imageUri?: string;
   }) {
     return this.api.post('/facilities', payload);
@@ -101,49 +126,73 @@ class ApiService {
   public async getFacilities(search = '') {
     return this.api.get<{ facilities: Array<{
       _id: string;
+      ownerName: string;
+      ownerEmail: string;
+      contactNumber: string;
       name: string;
       address: string;
       latitude: number;
       longitude: number;
       carSlots: number;
       bikeSlots: number;
+      carHourlyRate: number;
+      bikeHourlyRate: number;
       availableSlots: number;
       status: string;
+      imageUri?: string;
+      ratingAverage: number;
+      ratingCount: number;
     }> }>('/facilities', { params: search.trim() ? { q: search.trim() } : undefined });
   }
 
-  public async checkFacilityName(name: string) {
-    return this.api.get<{ available: boolean }>('/facilities/check-name', { params: { name } });
-  }
-
-  public async registerFacility(payload: {
-    ownerName: string;
-    ownerEmail: string;
-    contactNumber: string;
-    name: string;
-    address: string;
-    latitude: number;
-    longitude: number;
-    carSlots: number;
-    bikeSlots: number;
-    imageUri?: string;
-  }) {
-    return this.api.post('/facilities', payload);
-  }
-
-  public async getFacilities(search = '') {
+  public async getOwnerFacilities() {
     return this.api.get<{ facilities: Array<{
       _id: string;
+      ownerName: string;
+      ownerEmail: string;
+      contactNumber: string;
       name: string;
       address: string;
-      latitude: number;
-      longitude: number;
       carSlots: number;
       bikeSlots: number;
+      totalCapacity: number;
       availableSlots: number;
       status: string;
-    }> }>('/facilities', { params: search.trim() ? { q: search.trim() } : undefined });
+      imageUri?: string;
+    }> }>('/facilities/owner/me');
   }
+
+  public async getFacilityReviews(facilityId: string) {
+    return this.api.get<{
+      reviews: Array<{
+        _id: string;
+        reviewerName: string;
+        rating: number;
+        comment: string;
+        createdAt: string;
+      }>;
+      ratingAverage: number;
+      ratingCount: number;
+    }>(`/facilities/${facilityId}/reviews`);
+  }
+
+  public async addFacilityReview(facilityId: string, payload: { rating: number; comment: string }) {
+    return this.api.post(`/facilities/${facilityId}/reviews`, payload);
+  }
+}
+
+function appendImage(formData: FormData, uri?: string) {
+  if (!uri || uri.startsWith('http://') || uri.startsWith('https://')) {
+    return;
+  }
+
+  const fileName = uri.split('/').pop() || `avatar-${Date.now()}.jpg`;
+  const extension = fileName.split('.').pop()?.toLowerCase() || 'jpg';
+  formData.append('avatar', {
+    uri,
+    name: fileName,
+    type: `image/${extension === 'jpg' ? 'jpeg' : extension}`,
+  } as any);
 }
 
 export default new ApiService();
