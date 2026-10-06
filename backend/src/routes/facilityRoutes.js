@@ -6,6 +6,7 @@ import {
   listFacilityReviews,
   listOwnerFacilities,
   registerFacility,
+  updateSlotAvailability,
   updateOwnerFacility,
 } from '../controllers/facilityController.js';
 import { authenticate, requireRole } from '../middleware/auth.js';
@@ -15,6 +16,7 @@ const router = express.Router();
 router.get('/check-name', checkFacilityName);
 router.get('/owner/me', authenticate, listOwnerFacilities);
 router.put('/:facilityId', authenticate, requireRole('owner'), updateOwnerFacility);
+router.patch('/:facilityId/availability', authenticate, requireRole('owner'), updateSlotAvailability);
 router.get('/', listFacilities);
 router.post('/', authenticate, requireRole('owner'), registerFacility);
 router.get('/:facilityId/reviews', listFacilityReviews);

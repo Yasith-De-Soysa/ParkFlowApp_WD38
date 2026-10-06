@@ -32,7 +32,8 @@ function ParkingMarker({ slots }: { slots: number }) {
   );
 }
 
-export default function HomeMapScreen({ navigation }: { navigation: any }) {
+export default function HomeMapScreen({ navigation, route }: { navigation: any; route?: any }) {
+  const isOwnerHome = route?.name === 'OwnerHome';
   const insets = useSafeAreaInsets();
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [query, setQuery] = useState('');
@@ -153,8 +154,17 @@ export default function HomeMapScreen({ navigation }: { navigation: any }) {
 
       <View style={[styles.bottomNav, { bottom: insets.bottom + 15 }]}>
         <Tab icon="⌕" label="Explore" active />
-        <Tab icon="□" label="Reservations" />
-        <Tab icon="♙" label="My profile" onPress={() => navigation.navigate('Profile')} />
+        {isOwnerHome ? (
+          <>
+            <Tab icon="▦" label="Manage" onPress={() => navigation.navigate('OwnerManage')} />
+            <Tab icon="P" label="Parking profile" onPress={() => navigation.navigate('ParkingProfile')} />
+          </>
+        ) : (
+          <>
+            <Tab icon="□" label="Reservations" />
+            <Tab icon="♙" label="My profile" onPress={() => navigation.navigate('Profile')} />
+          </>
+        )}
       </View>
     </View>
   );

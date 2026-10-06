@@ -129,7 +129,7 @@ export default function ProfileScreen({ navigation }: { navigation: any }) {
       </ScrollView>
 
       <View style={[styles.bottomNav, { bottom: insets.bottom + 15 }]}>
-        <Tab icon="⌕" label="Explore" />
+        <Tab icon="⌕" label="Explore" onPress={() => navigation.navigate('Home')} />
         <Tab icon="□" label="Reservations" />
         <Tab icon="♙" label="My profile" active onPress={() => navigation.navigate('Profile')} />
       </View>

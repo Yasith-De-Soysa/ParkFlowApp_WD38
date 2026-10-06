@@ -75,6 +75,8 @@ export const registerFacility = async (req, res, next) => {
       existingFacility.longitude = Number(longitude);
       existingFacility.carSlots = Math.max(0, Number(carSlots) || 0);
       existingFacility.bikeSlots = Math.max(0, Number(bikeSlots) || 0);
+      existingFacility.carAvailableSlots = existingFacility.carSlots;
+      existingFacility.bikeAvailableSlots = existingFacility.bikeSlots;
       existingFacility.carHourlyRate = Number(carHourlyRate);
       existingFacility.bikeHourlyRate = Number(bikeHourlyRate);
       existingFacility.imageUri = imageUri;
@@ -94,6 +96,8 @@ export const registerFacility = async (req, res, next) => {
       longitude: Number(longitude),
       carSlots: Math.max(0, Number(carSlots) || 0),
       bikeSlots: Math.max(0, Number(bikeSlots) || 0),
+      carAvailableSlots: Math.max(0, Number(carSlots) || 0),
+      bikeAvailableSlots: Math.max(0, Number(bikeSlots) || 0),
       carHourlyRate: Number(carHourlyRate),
       bikeHourlyRate: Number(bikeHourlyRate),
       imageUri,
@@ -128,7 +132,11 @@ export const listFacilities = async (req, res, next) => {
     return res.json({
       facilities: facilities.map((facility) => ({
         ...facility,
-        availableSlots: facility.carSlots + facility.bikeSlots,
+        carAvailableSlots: Math.min(facility.carAvailableSlots ?? facility.carSlots, facility.carSlots),
+        bikeAvailableSlots: Math.min(facility.bikeAvailableSlots ?? facility.bikeSlots, facility.bikeSlots),
+        availableSlots:
+          Math.min(facility.carAvailableSlots ?? facility.carSlots, facility.carSlots) +
+          Math.min(facility.bikeAvailableSlots ?? facility.bikeSlots, facility.bikeSlots),
         ...reviewSummary(facility),
       })),
     });
@@ -148,10 +156,56 @@ export const listOwnerFacilities = async (req, res, next) => {
     return res.json({
       facilities: facilities.map((facility) => ({
         ...facility,
-        availableSlots: facility.carSlots + facility.bikeSlots,
+        carAvailableSlots: Math.min(facility.carAvailableSlots ?? facility.carSlots, facility.carSlots),
+        bikeAvailableSlots: Math.min(facility.bikeAvailableSlots ?? facility.bikeSlots, facility.bikeSlots),
+        availableSlots:
+          Math.min(facility.carAvailableSlots ?? facility.carSlots, facility.carSlots) +
+          Math.min(facility.bikeAvailableSlots ?? facility.bikeSlots, facility.bikeSlots),
         totalCapacity: facility.carSlots + facility.bikeSlots,
         ...reviewSummary(facility),
       })),
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const updateSlotAvailability = async (req, res, next) => {
+  try {
+    const carAvailableSlots = Number(req.body.carAvailableSlots);
+    const bikeAvailableSlots = Number(req.body.bikeAvailableSlots);
+    if (!Number.isInteger(carAvailableSlots) || !Number.isInteger(bikeAvailableSlots)) {
+      return res.status(400).json({ error: { message: 'Available slots must be whole numbers.' } });
+    }
+
+    const facility = await ParkingFacility.findOne({
+      _id: req.params.facilityId,
+      ownerEmail: req.user.email.toLowerCase(),
+      status: 'active',
+    });
+    if (!facility) {
+      return res.status(404).json({ error: { message: 'Active parking facility not found.' } });
+    }
+    if (
+      carAvailableSlots < 0 ||
+      carAvailableSlots > facility.carSlots ||
+      bikeAvailableSlots < 0 ||
+      bikeAvailableSlots > facility.bikeSlots
+    ) {
+      return res.status(400).json({ error: { message: 'Available slots cannot exceed the registered capacity.' } });
+    }
+
+    facility.carAvailableSlots = carAvailableSlots;
+    facility.bikeAvailableSlots = bikeAvailableSlots;
+    await facility.save();
+
+    return res.json({
+      message: 'Slot availability published.',
+      availability: {
+        carAvailableSlots,
+        bikeAvailableSlots,
+        availableSlots: carAvailableSlots + bikeAvailableSlots,
+      },
     });
   } catch (error) {
     return next(error);

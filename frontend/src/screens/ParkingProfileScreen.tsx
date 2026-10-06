@@ -123,9 +123,9 @@ export default function ParkingProfileScreen({ navigation }: { navigation: any }
       </ScrollView>
 
       <View style={styles.bottomNav}>
-        <NavItem icon="⌕" label="Explore" />
-        <NavItem icon="▦" label="Manage" />
-        <NavItem icon="P" label="Parking profile" active />
+        <NavItem icon="⌕" label="Explore" onPress={() => navigation.navigate('OwnerHome')} />
+        <NavItem icon="▦" label="Manage" onPress={() => navigation.navigate('OwnerManage')} />
+        <NavItem icon="P" label="Parking profile" active onPress={() => navigation.navigate('ParkingProfile')} />
       </View>
     </SafeAreaView>
   );
@@ -152,14 +152,14 @@ function CapacityCard({ label, value }: { label: string; value: number }) {
   );
 }
 
-function NavItem({ icon, label, active }: { icon: string; label: string; active?: boolean }) {
+function NavItem({ icon, label, active, onPress }: { icon: string; label: string; active?: boolean; onPress?: () => void }) {
   return (
-    <View style={styles.navItem}>
+    <Pressable accessibilityRole="button" onPress={onPress} style={styles.navItem}>
       <View style={[styles.navIcon, active && styles.activeNavIcon]}>
         <Text style={[styles.navIconText, active && styles.activeNavIconText]}>{icon}</Text>
       </View>
       <Text style={[styles.navLabel, active && styles.activeNavLabel]}>{label}</Text>
-    </View>
+    </Pressable>
   );
 }
 

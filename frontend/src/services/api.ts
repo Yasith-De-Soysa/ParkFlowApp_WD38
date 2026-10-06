@@ -116,6 +116,8 @@ class ApiService {
     longitude: number;
     carSlots: number;
     bikeSlots: number;
+    carAvailableSlots: number;
+    bikeAvailableSlots: number;
     carHourlyRate: number;
     bikeHourlyRate: number;
     imageUri?: string;
@@ -135,6 +137,8 @@ class ApiService {
       longitude: number;
       carSlots: number;
       bikeSlots: number;
+      carAvailableSlots: number;
+      bikeAvailableSlots: number;
       carHourlyRate: number;
       bikeHourlyRate: number;
       availableSlots: number;
@@ -155,6 +159,8 @@ class ApiService {
       address: string;
       carSlots: number;
       bikeSlots: number;
+      carAvailableSlots: number;
+      bikeAvailableSlots: number;
       totalCapacity: number;
       availableSlots: number;
       status: string;
@@ -176,6 +182,13 @@ class ApiService {
     bikeHourlyRate: number;
   }) {
     return this.api.put(`/facilities/${facilityId}`, payload);
+  }
+
+  public async updateSlotAvailability(
+    facilityId: string,
+    payload: { carAvailableSlots: number; bikeAvailableSlots: number },
+  ) {
+    return this.api.patch(`/facilities/${facilityId}/availability`, payload);
   }
 
   public async adminLogin(payload: { email: string; password: string }) {

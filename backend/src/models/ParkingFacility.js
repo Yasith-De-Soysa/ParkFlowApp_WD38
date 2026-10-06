@@ -40,6 +40,8 @@ const parkingFacilitySchema = new mongoose.Schema(
     longitude: { type: Number, required: true },
     carSlots: { type: Number, required: true, min: 0 },
     bikeSlots: { type: Number, required: true, min: 0 },
+    carAvailableSlots: { type: Number, min: 0 },
+    bikeAvailableSlots: { type: Number, min: 0 },
     carHourlyRate: { type: Number, required: true, min: 0, default: 0 },
     bikeHourlyRate: { type: Number, required: true, min: 0, default: 0 },
     reviews: { type: [reviewSchema], default: [] },

@@ -106,9 +106,6 @@ export default function LoginScreen({ navigation }: { navigation: any }) {
             >
               {submitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.signInText}>Sign In</Text>}
             </Pressable>
-            <Pressable accessibilityRole="link" onPress={() => navigation.navigate('AdminLogin')} style={styles.adminLink}>
-              <Text style={styles.adminLinkText}>Admin dashboard</Text>
-            </Pressable>
           </View>
 
           <Pressable
@@ -197,6 +194,4 @@ const styles = StyleSheet.create({
   signUpLink: { alignItems: 'center' },
   signUpText: { color: '#c9d8d3', fontSize: 13, lineHeight: 16 },
   underlined: { textDecorationLine: 'underline' },
-  adminLink: { alignItems: 'center', marginTop: 4 },
-  adminLinkText: { color: '#f4b740', fontSize: 12, textDecorationLine: 'underline' },
 });
