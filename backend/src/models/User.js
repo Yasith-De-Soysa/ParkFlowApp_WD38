@@ -24,12 +24,16 @@ const userSchema = new mongoose.Schema(
     vehicleType: {
       type: String,
       enum: ['Car', 'Bike'],
-      required: true,
     },
     vehicleNumber: {
       type: String,
-      required: true,
       trim: true,
+    },
+    role: {
+      type: String,
+      enum: ['user', 'owner', 'admin'],
+      default: 'user',
+      required: true,
     },
     avatar: {
       type: String,

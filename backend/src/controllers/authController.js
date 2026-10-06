@@ -11,6 +11,7 @@ const userResponse = (user) => ({
   vehicleNumber: user.vehicleNumber,
   avatar: user.avatar,
   createdAt: user.createdAt,
+  role: user.role,
 });
 
 const avatarUrl = (req) => {
@@ -53,7 +54,7 @@ export const register = async (req, res, next) => {
       vehicleNumber: vehicleNumber.trim(),
       avatar: avatarUrl(req),
     });
-    const token = jwt.sign({ userId: user._id.toString(), email: user.email }, process.env.JWT_SECRET || 'development-secret', {
+    const token = jwt.sign({ userId: user._id.toString(), email: user.email, role: user.role }, process.env.JWT_SECRET || 'development-secret', {
       expiresIn: '7d',
     });
 
@@ -75,6 +76,27 @@ export const login = async (req, res, next) => {
       return res.status(400).json({ error: { message: 'Email and password are required.' } });
     }
 
+    if (
+      normalizedEmail === process.env.ADMIN_EMAIL?.trim().toLowerCase() &&
+      password === process.env.ADMIN_PASSWORD
+    ) {
+      const token = jwt.sign(
+        { userId: 'admin', email: normalizedEmail, role: 'admin' },
+        process.env.JWT_SECRET || 'development-secret',
+        { expiresIn: '8h' },
+      );
+
+      return res.json({
+        token,
+        user: {
+          id: 'admin',
+          email: normalizedEmail,
+          name: 'Administrator',
+          role: 'admin',
+        },
+      });
+    }
+
     const user = await User.findOne({ email: normalizedEmail });
     if (!user) {
       return res.status(404).json({ error: { message: 'User does not exist.' } });
@@ -86,7 +108,7 @@ export const login = async (req, res, next) => {
     }
 
     const token = jwt.sign(
-      { userId: user._id.toString(), email: user.email },
+      { userId: user._id.toString(), email: user.email, role: user.role },
       process.env.JWT_SECRET || 'development-secret',
       { expiresIn: '7d' }
     );

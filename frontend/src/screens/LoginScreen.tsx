@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   ActivityIndicator,
   Alert,
@@ -27,8 +28,34 @@ export default function LoginScreen({ navigation }: { navigation: any }) {
 
     setSubmitting(true);
     try {
-      await api.login({ email, password });
-      navigation.replace('Home');
+      const response = await api.login({ email, password });
+      if (response.user?.role === 'admin') {
+        navigation.replace('AdminDashboard');
+      } else if (response.user?.role === 'owner') {
+        const facilitiesResponse = await api.getOwnerFacilities();
+        const facility = facilitiesResponse.facilities[0];
+        if (!facility) {
+          navigation.replace('OwnerRegistration');
+        } else if (facility.status === 'pending' || facility.status === 'declined') {
+          navigation.replace('OwnerRegistrationStatus', {
+            status: facility.status,
+            facilityId: facility._id,
+          });
+        } else if (facility.status === 'active') {
+          const noticeKey = `parkflow.owner.approved.${facility._id}`;
+          const hasSeenApprovalNotice = await AsyncStorage.getItem(noticeKey);
+          if (!hasSeenApprovalNotice) {
+            await AsyncStorage.setItem(noticeKey, 'true');
+            Alert.alert('Registration successful', 'Your parking registration was approved.', [
+              { text: 'Continue', onPress: () => navigation.replace('ParkingProfile') },
+            ]);
+          } else {
+            navigation.replace('ParkingProfile');
+          }
+        }
+      } else {
+        navigation.replace('Home');
+      }
     } catch (error: any) {
       const message = error?.response?.data?.error?.message || 'Unable to sign in.';
       Alert.alert('Sign in failed', message);
@@ -78,6 +105,9 @@ export default function LoginScreen({ navigation }: { navigation: any }) {
               style={({ pressed }) => [styles.signInButton, pressed && styles.buttonPressed]}
             >
               {submitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.signInText}>Sign In</Text>}
+            </Pressable>
+            <Pressable accessibilityRole="link" onPress={() => navigation.navigate('AdminLogin')} style={styles.adminLink}>
+              <Text style={styles.adminLinkText}>Admin dashboard</Text>
             </Pressable>
           </View>
 
@@ -167,4 +197,6 @@ const styles = StyleSheet.create({
   signUpLink: { alignItems: 'center' },
   signUpText: { color: '#c9d8d3', fontSize: 13, lineHeight: 16 },
   underlined: { textDecorationLine: 'underline' },
+  adminLink: { alignItems: 'center', marginTop: 4 },
+  adminLinkText: { color: '#f4b740', fontSize: 12, textDecorationLine: 'underline' },
 });

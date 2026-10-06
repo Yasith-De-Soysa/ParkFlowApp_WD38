@@ -23,9 +23,10 @@ type OwnerFacility = {
   bikeSlots: number;
   totalCapacity: number;
   status: string;
+  pendingChanges?: Record<string, unknown>;
 };
 
-export default function ParkingProfileScreen() {
+export default function ParkingProfileScreen({ navigation }: { navigation: any }) {
   const [facility, setFacility] = useState<OwnerFacility | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -102,8 +103,20 @@ export default function ParkingProfileScreen() {
               <Text style={styles.email}>{facility.ownerEmail}</Text>
             </ProfileSection>
 
-            <Pressable style={styles.editButton} accessibilityRole="button">
-              <Text style={styles.editButtonText}>Edit Profile</Text>
+            {facility.pendingChanges ? (
+              <View style={styles.pendingNotice}>
+                <Text style={styles.pendingNoticeText}>Update submitted for review. Your current profile remains active until admin approval.</Text>
+              </View>
+            ) : null}
+            <Pressable
+              style={styles.editButton}
+              accessibilityRole="button"
+              disabled={Boolean(facility.pendingChanges)}
+              onPress={() => navigation.navigate('EditParkingProfile', { facility })}
+            >
+              <Text style={[styles.editButtonText, facility.pendingChanges && styles.disabledButtonText]}>
+                {facility.pendingChanges ? 'Update awaiting approval' : 'Edit Profile'}
+              </Text>
             </Pressable>
           </>
         )}
@@ -186,6 +199,9 @@ const styles = StyleSheet.create({
   divider: { height: 1, backgroundColor: '#e1e8e5', marginVertical: 2 },
   editButton: { height: 52, alignItems: 'center', justifyContent: 'center', borderRadius: 13, backgroundColor: '#176b58' },
   editButtonText: { color: '#fff', fontSize: 15, fontWeight: '800' },
+  disabledButtonText: { color: '#66736f' },
+  pendingNotice: { padding: 13, borderRadius: 12, backgroundColor: '#fff4d6' },
+  pendingNoticeText: { color: '#8a6412', fontSize: 13, lineHeight: 18 },
   bottomNav: { position: 'absolute', left: 10, right: 10, bottom: 14, height: 68, paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', borderRadius: 16, backgroundColor: '#fff', shadowColor: '#17332c', shadowOpacity: 0.1, shadowRadius: 10, elevation: 4 },
   navItem: { alignItems: 'center', gap: 3, minWidth: 80 },
   navIcon: { width: 32, height: 30, alignItems: 'center', justifyContent: 'center', borderRadius: 9 },

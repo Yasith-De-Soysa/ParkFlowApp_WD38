@@ -30,7 +30,6 @@ export const registerFacility = async (req, res, next) => {
   try {
     const {
       ownerName,
-      ownerEmail,
       contactNumber,
       name,
       address,
@@ -44,10 +43,11 @@ export const registerFacility = async (req, res, next) => {
     } = req.body;
     const normalizedName = typeof name === 'string' ? normalizeName(name) : '';
 
-    if (!ownerName?.trim() || !ownerEmail?.trim() || !contactNumber?.trim() || !name?.trim() || !address?.trim()) {
+    const ownerEmail = req.user.email;
+    if (!ownerName?.trim() || !ownerEmail || !contactNumber?.trim() || !name?.trim() || !address?.trim()) {
       return res.status(400).json({ error: { message: 'Owner, contact, facility name, and address details are required.' } });
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ownerEmail.trim())) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ownerEmail)) {
       return res.status(400).json({ error: { message: 'Please provide a valid owner email address.' } });
     }
     if (!Number.isFinite(Number(latitude)) || !Number.isFinite(Number(longitude))) {
@@ -64,12 +64,28 @@ export const registerFacility = async (req, res, next) => {
 
     const existingFacility = await ParkingFacility.findOne({ normalizedName });
     if (existingFacility) {
-      return res.status(409).json({ error: { message: 'A parking facility with this name already exists.' } });
+      if (existingFacility.status !== 'declined' || existingFacility.ownerEmail !== ownerEmail) {
+        return res.status(409).json({ error: { message: 'A parking facility with this name already exists.' } });
+      }
+
+      existingFacility.ownerName = ownerName.trim();
+      existingFacility.contactNumber = contactNumber.trim();
+      existingFacility.address = address.trim();
+      existingFacility.latitude = Number(latitude);
+      existingFacility.longitude = Number(longitude);
+      existingFacility.carSlots = Math.max(0, Number(carSlots) || 0);
+      existingFacility.bikeSlots = Math.max(0, Number(bikeSlots) || 0);
+      existingFacility.carHourlyRate = Number(carHourlyRate);
+      existingFacility.bikeHourlyRate = Number(bikeHourlyRate);
+      existingFacility.imageUri = imageUri;
+      existingFacility.status = 'pending';
+      await existingFacility.save();
+      return res.status(201).json({ facility: existingFacility });
     }
 
     const facility = await ParkingFacility.create({
       ownerName: ownerName.trim(),
-      ownerEmail: ownerEmail.trim(),
+      ownerEmail,
       contactNumber: contactNumber.trim(),
       name: name.trim(),
       normalizedName,
@@ -95,7 +111,7 @@ export const registerFacility = async (req, res, next) => {
 export const listFacilities = async (req, res, next) => {
   try {
     const query = req.query.q?.toString().trim() || '';
-    const filter = { status: { $in: ['pending', 'active'] } };
+    const filter = { status: 'active' };
 
     if (query) {
       const safeQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -137,6 +153,69 @@ export const listOwnerFacilities = async (req, res, next) => {
         ...reviewSummary(facility),
       })),
     });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const updateOwnerFacility = async (req, res, next) => {
+  try {
+    const {
+      ownerName, contactNumber, name, address, latitude, longitude,
+      carSlots, bikeSlots, carHourlyRate, bikeHourlyRate, imageUri,
+    } = req.body;
+    const normalizedName = typeof name === 'string' ? normalizeName(name) : '';
+
+    if (!ownerName?.trim() || !contactNumber?.trim() || !name?.trim() || !address?.trim()) {
+      return res.status(400).json({ error: { message: 'Owner, contact, facility name, and address details are required.' } });
+    }
+    if (!Number.isFinite(Number(latitude)) || !Number.isFinite(Number(longitude))) {
+      return res.status(400).json({ error: { message: 'Please provide a valid facility location.' } });
+    }
+    if (
+      !Number.isFinite(Number(carHourlyRate)) || Number(carHourlyRate) < 0 ||
+      !Number.isFinite(Number(bikeHourlyRate)) || Number(bikeHourlyRate) < 0
+    ) {
+      return res.status(400).json({ error: { message: 'Please provide valid hourly rates.' } });
+    }
+
+    const facility = await ParkingFacility.findOne({
+      _id: req.params.facilityId,
+      ownerEmail: req.user.email.toLowerCase(),
+      status: 'active',
+    });
+    if (!facility) {
+      return res.status(404).json({ error: { message: 'Active parking facility not found.' } });
+    }
+    if (facility.pendingChanges) {
+      return res.status(409).json({ error: { message: 'An update is already waiting for admin approval.' } });
+    }
+
+    const duplicate = await ParkingFacility.findOne({
+      normalizedName,
+      _id: { $ne: facility._id },
+      status: { $ne: 'declined' },
+    });
+    if (duplicate) {
+      return res.status(409).json({ error: { message: 'A parking facility with this name already exists.' } });
+    }
+
+    facility.pendingChanges = {
+      ownerName: ownerName.trim(),
+      contactNumber: contactNumber.trim(),
+      name: name.trim(),
+      normalizedName,
+      address: address.trim(),
+      latitude: Number(latitude),
+      longitude: Number(longitude),
+      carSlots: Math.max(0, Number(carSlots) || 0),
+      bikeSlots: Math.max(0, Number(bikeSlots) || 0),
+      carHourlyRate: Number(carHourlyRate),
+      bikeHourlyRate: Number(bikeHourlyRate),
+      imageUri,
+    };
+    await facility.save();
+    return res.status(202).json({ message: 'Update submitted for admin review.' });
   } catch (error) {
     return next(error);
   }

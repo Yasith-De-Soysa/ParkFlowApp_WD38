@@ -159,7 +159,41 @@ class ApiService {
       availableSlots: number;
       status: string;
       imageUri?: string;
+      pendingChanges?: Record<string, unknown>;
     }> }>('/facilities/owner/me');
+  }
+
+  public async updateOwnerFacility(facilityId: string, payload: {
+    ownerName: string;
+    contactNumber: string;
+    name: string;
+    address: string;
+    latitude: number;
+    longitude: number;
+    carSlots: number;
+    bikeSlots: number;
+    carHourlyRate: number;
+    bikeHourlyRate: number;
+  }) {
+    return this.api.put(`/facilities/${facilityId}`, payload);
+  }
+
+  public async adminLogin(payload: { email: string; password: string }) {
+    const response = await this.api.post('/admin/login', payload);
+    await AsyncStorage.setItem('parkflow.auth.token', response.token);
+    return response;
+  }
+
+  public async createOwnerAccount(payload: { email: string; password: string }) {
+    return this.api.post('/admin/owners', payload);
+  }
+
+  public async getPendingFacilities() {
+    return this.api.get('/admin/facilities/pending');
+  }
+
+  public async reviewFacility(facilityId: string, action: 'approve' | 'decline') {
+    return this.api.patch(`/admin/facilities/${facilityId}/review`, { action });
   }
 
   public async getFacilityReviews(facilityId: string) {

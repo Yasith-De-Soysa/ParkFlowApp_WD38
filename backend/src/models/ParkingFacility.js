@@ -10,6 +10,24 @@ const reviewSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+const facilityChangeSchema = new mongoose.Schema(
+  {
+    ownerName: { type: String, required: true, trim: true },
+    contactNumber: { type: String, required: true, trim: true },
+    name: { type: String, required: true, trim: true },
+    normalizedName: { type: String, required: true },
+    address: { type: String, required: true, trim: true },
+    latitude: { type: Number, required: true },
+    longitude: { type: Number, required: true },
+    carSlots: { type: Number, required: true, min: 0 },
+    bikeSlots: { type: Number, required: true, min: 0 },
+    carHourlyRate: { type: Number, required: true, min: 0 },
+    bikeHourlyRate: { type: Number, required: true, min: 0 },
+    imageUri: { type: String },
+  },
+  { _id: false },
+);
+
 const parkingFacilitySchema = new mongoose.Schema(
   {
     ownerName: { type: String, required: true, trim: true },
@@ -26,7 +44,8 @@ const parkingFacilitySchema = new mongoose.Schema(
     bikeHourlyRate: { type: Number, required: true, min: 0, default: 0 },
     reviews: { type: [reviewSchema], default: [] },
     imageUri: { type: String },
-    status: { type: String, enum: ['pending', 'active'], default: 'pending' },
+    pendingChanges: { type: facilityChangeSchema },
+    status: { type: String, enum: ['pending', 'active', 'declined'], default: 'pending' },
   },
   { timestamps: true }
 );

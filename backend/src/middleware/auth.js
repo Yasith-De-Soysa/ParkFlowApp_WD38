@@ -16,6 +16,13 @@ export const authenticate = (req, res, next) => {
   }
 };
 
+export const requireRole = (...roles) => (req, res, next) => {
+  if (!roles.includes(req.user?.role)) {
+    return res.status(403).json({ error: { message: 'You do not have permission to perform this action.' } });
+  }
+  next();
+};
+
 // Error handler middleware
 export const errorHandler = (err, req, res, next) => {
   console.error('Error:', err);

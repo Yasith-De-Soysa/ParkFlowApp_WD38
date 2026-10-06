@@ -192,7 +192,7 @@ export default function OwnerRegistrationScreen({ navigation }: { navigation: an
         imageUri,
       });
       Alert.alert('Submitted for review', 'We will verify your facility details before it goes live.', [
-        { text: 'OK', onPress: () => navigation.goBack() },
+        { text: 'OK', onPress: () => navigation.replace('OwnerRegistrationStatus', { status: 'pending' }) },
       ]);
     } catch (error) {
       const message = axios.isAxiosError(error)
