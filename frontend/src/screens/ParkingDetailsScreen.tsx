@@ -1,14 +1,17 @@
 import React from 'react';
 import {
+  Alert,
   Image,
   Linking,
   Pressable,
   ScrollView,
+  RefreshControl,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../services/api';
 
 export type ParkingFacility = {
   _id: string;
@@ -37,13 +40,36 @@ export default function ParkingDetailsScreen({
   navigation: any;
   route: { params: { facility: ParkingFacility } };
 }) {
-  const { facility } = route.params;
+  const [facility, setFacility] = React.useState(route.params.facility);
+  const [refreshing, setRefreshing] = React.useState(false);
   const statusLabel = facility.status === 'active' ? 'Open for parking' : 'Pending verification';
   const hasImage = Boolean(facility.imageUri);
 
+  const refreshFacility = async () => {
+    setRefreshing(true);
+    try {
+      const response = await api.getFacilities();
+      const updatedFacility = response.facilities.find((item) => item._id === facility._id);
+      if (updatedFacility) {
+        setFacility(updatedFacility);
+      } else {
+        Alert.alert('Facility unavailable', 'This parking facility is no longer available.');
+      }
+    } catch (error) {
+      console.error('Unable to refresh parking facility:', error);
+      Alert.alert('Refresh failed', 'Unable to refresh this parking facility.');
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshFacility} tintColor="#176b58" />}
+      >
         <View style={styles.header}>
           <Pressable accessibilityRole="button" onPress={() => navigation.goBack()} style={styles.back}>
             <Text style={styles.backText}>‹</Text>

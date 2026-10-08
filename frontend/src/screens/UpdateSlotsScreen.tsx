@@ -41,9 +41,7 @@ export default function UpdateSlotsScreen({ navigation, route }: { navigation: a
     setSaving(true);
     try {
       await api.updateSlotAvailability(facility._id, { carAvailableSlots, bikeAvailableSlots });
-      Alert.alert('Availability published', 'Users can now see the updated slot availability.', [
-        { text: 'Continue', onPress: () => navigation.replace('OwnerManage') },
-      ]);
+      Alert.alert('Availability published', 'Users can now see the updated slot availability.');
     } catch (error: any) {
       const message = error?.response?.data?.error?.message || 'Unable to publish slot availability.';
       Alert.alert('Update failed', message);

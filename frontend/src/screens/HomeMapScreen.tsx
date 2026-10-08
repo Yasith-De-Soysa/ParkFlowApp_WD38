@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, PanResponder, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import * as Location from 'expo-location';
 import { Region } from 'react-native-maps';
 import { useIsFocused } from '@react-navigation/native';
@@ -41,6 +41,7 @@ export default function HomeMapScreen({ navigation, route }: { navigation: any; 
   const [query, setQuery] = useState('');
   const [region, setRegion] = useState<Region>(fallbackRegion);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState('');
   const [locationPermission, setLocationPermission] = useState<Location.PermissionStatus | null>(null);
@@ -75,22 +76,46 @@ export default function HomeMapScreen({ navigation, route }: { navigation: any; 
     }
   }, []);
 
-  const loadFacilities = useCallback(() => {
+  const loadFacilities = useCallback(async () => {
     setLoading(true);
-    api.getFacilities(query)
-      .then((response) => {
-        setFacilities(response.facilities);
-        setError('');
-      })
-      .catch((requestError) => {
-        console.error('Unable to load parking facilities:', requestError);
-        setError('Unable to load parking for this search.');
-      })
-      .finally(() => {
-        setLoading(false);
-        setSearching(false);
-      });
+    try {
+      const response = await api.getFacilities(query);
+      setFacilities(response.facilities);
+      setError('');
+    } catch (requestError) {
+      console.error('Unable to load parking facilities:', requestError);
+      setError('Unable to load parking for this search.');
+    } finally {
+      setLoading(false);
+      setSearching(false);
+    }
   }, [query]);
+
+  const refreshFacilities = useCallback(async () => {
+    if (refreshing) {
+      return;
+    }
+    setRefreshing(true);
+    try {
+      await Promise.all([loadFacilities(), locateMe()]);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [loadFacilities, locateMe, refreshing]);
+
+  const refreshPanResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gesture) =>
+        isOwnerHome &&
+        gesture.dy > 14 &&
+        gesture.dy > Math.abs(gesture.dx) * 1.2,
+      onPanResponderRelease: (_, gesture) => {
+        if (gesture.dy > 55) {
+          void refreshFacilities();
+        }
+      },
+    }),
+  ).current;
 
   useEffect(() => {
     if (!isFocused) {
@@ -108,7 +133,7 @@ export default function HomeMapScreen({ navigation, route }: { navigation: any; 
   }, [isFocused, loadFacilities, locateMe, query]);
 
   return (
-    <View style={styles.screen}>
+    <View style={styles.screen} {...(isOwnerHome ? refreshPanResponder.panHandlers : {})}>
       <View style={[styles.map, { top: insets.top, bottom: insets.bottom }]}>
         <OpenStreetMapView
           latitude={region.latitude}
@@ -136,6 +161,12 @@ export default function HomeMapScreen({ navigation, route }: { navigation: any; 
             <Text style={styles.goodMorning}>Good morning</Text>
             <Text style={styles.title}>Find a parking spot</Text>
           </View>
+          {isOwnerHome && refreshing ? (
+            <View style={[styles.refreshIndicator, { top: insets.top + 12 }]}>
+              <ActivityIndicator color="#176b58" />
+              <Text style={styles.refreshText}>Refreshing</Text>
+            </View>
+          ) : null}
           <View style={styles.logo}><Text style={styles.logoText}>P</Text></View>
         </View>
         <View style={styles.search}>
@@ -244,6 +275,8 @@ const styles = StyleSheet.create({
   locationButtonLabel: { color: '#176b58', fontSize: 12, fontWeight: '700' },
   locationNotice: { position: 'absolute', left: 17, right: 17, paddingHorizontal: 12, paddingVertical: 9, borderRadius: 10, backgroundColor: '#fff8e7', borderWidth: 1, borderColor: '#f4b740' },
   locationNoticeText: { color: '#6b551f', fontSize: 12 },
+  refreshIndicator: { position: 'absolute', alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999, backgroundColor: '#fff', shadowColor: '#17332c', shadowOpacity: 0.12, shadowRadius: 8, elevation: 4 },
+  refreshText: { color: '#176b58', fontSize: 12, fontWeight: '700' },
   marker: { alignItems: 'center' },
   slotBubble: { paddingHorizontal: 10, paddingVertical: 7, borderRadius: 999, backgroundColor: '#176b58' },
   slotText: { color: '#fff', fontSize: 12, fontWeight: '700' },

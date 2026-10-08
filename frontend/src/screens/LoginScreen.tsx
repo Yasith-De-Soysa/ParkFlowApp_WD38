@@ -47,10 +47,10 @@ export default function LoginScreen({ navigation }: { navigation: any }) {
           if (!hasSeenApprovalNotice) {
             await AsyncStorage.setItem(noticeKey, 'true');
             Alert.alert('Registration successful', 'Your parking registration was approved.', [
-              { text: 'Continue', onPress: () => navigation.replace('ParkingProfile') },
+              { text: 'Continue', onPress: () => navigation.replace('OwnerHome') },
             ]);
           } else {
-            navigation.replace('ParkingProfile');
+            navigation.replace('OwnerHome');
           }
         }
       } else {
