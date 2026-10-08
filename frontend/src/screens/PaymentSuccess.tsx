@@ -1,14 +1,35 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Alert } from 'react-native';
+import api from '../services/api';
 
 interface PaymentSuccessProps {
   navigation: {
-    navigate: (screen: string) => void;
+    navigate: (screen: string, params?: Record<string, string>) => void;
   };
+  route?: { params?: { date?: string; slot?: string; type?: string; facilityName?: string } };
 }
 
-export default function PaymentSuccess({ navigation }: PaymentSuccessProps) {
+export default function PaymentSuccess({ navigation, route }: PaymentSuccessProps) {
+  const reservation = route?.params;
+  const [saving, setSaving] = React.useState(false);
+  const [reservationCode, setReservationCode] = React.useState('Pending');
+
+  React.useEffect(() => {
+    setSaving(true);
+    api.createReservation({
+      facilityName: reservation?.facilityName || 'Central Plaza Parking',
+      date: reservation?.date || '17 Sep 2026',
+      time: '10:00 AM - 1:00 PM',
+      slot: reservation?.slot || 'A3',
+      vehicleType: reservation?.type === 'Bike' ? 'Bike' : 'Car',
+      amount: 9,
+    })
+      .then((response) => setReservationCode(response.reservation.reservationCode))
+      .catch(() => Alert.alert('Reservation not saved', 'Payment succeeded, but we could not save your reservation.'))
+      .finally(() => setSaving(false));
+  }, [reservation?.date, reservation?.facilityName, reservation?.slot, reservation?.type]);
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.content}>
@@ -23,12 +44,12 @@ export default function PaymentSuccess({ navigation }: PaymentSuccessProps) {
           <Text style={styles.amount}>$9.00</Text>
           <View style={styles.divider} />
           <Text style={styles.detailLabel}>Reservation ID</Text>
-          <Text style={styles.detailValue}>PF-2024-0927</Text>
+          <Text style={styles.detailValue}>{saving ? 'Saving...' : reservationCode}</Text>
         </View>
 
         <Pressable
           accessibilityRole="button"
-          onPress={() => navigation.navigate('Home')}
+          onPress={() => navigation.navigate('Reservations')}
           style={styles.primaryButton}
         >
           <Text style={styles.primaryButtonText}>View reservation</Text>

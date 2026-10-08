@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 interface ConfirmReservationProps {
   navigation: {
     goBack: () => void;
-    navigate: (screen: string) => void;
+    navigate: (screen: string, params?: Record<string, string>) => void;
   };
   route?: {
     params?: {
@@ -74,7 +74,7 @@ export default function ConfirmReservation({
 
         <Pressable
           accessibilityRole="button"
-          onPress={() => navigation.navigate('SecureCheckout')}
+          onPress={() => navigation.navigate('SecureCheckout', { ...route?.params })}
           style={styles.paymentButton}
         >
           <Text style={styles.paymentText}>Continue to Payment</Text>

@@ -7,6 +7,7 @@ import { connectDB } from './config/database.js';
 import authRoutes from './routes/authRoutes.js';
 import facilityRoutes from './routes/facilityRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+import reservationRoutes from './routes/reservationRoutes.js';
 import path from 'node:path';
 
 dotenv.config();
@@ -30,7 +31,7 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/facilities', facilityRoutes);
 app.use('/api/admin', adminRoutes);
-// app.use('/api/users', userRoutes);
+app.use('/api/reservations', reservationRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

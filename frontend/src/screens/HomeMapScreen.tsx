@@ -207,7 +207,7 @@ export default function HomeMapScreen({ navigation, route }: { navigation: any; 
           </>
         ) : (
           <>
-            <Tab icon="□" label="Reservations" />
+            <Tab icon="□" label="Reservations" onPress={() => navigation.navigate('Reservations')} />
             <Tab icon="♙" label="My profile" onPress={() => navigation.navigate('Profile')} />
           </>
         )}

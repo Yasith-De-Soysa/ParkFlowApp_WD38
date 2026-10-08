@@ -13,8 +13,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 interface SecureCheckoutProps {
   navigation: {
     goBack: () => void;
-    navigate: (screen: string) => void;
+    navigate: (screen: string, params?: Record<string, string>) => void;
   };
+  route?: { params?: { date?: string; slot?: string; type?: string; facilityName?: string } };
 }
 
 type PaymentMethod = 'Credit / Debit' | 'Mobile Wallet' | 'QR Code';
@@ -25,7 +26,7 @@ const paymentMethods: PaymentMethod[] = [
   'QR Code',
 ];
 
-export default function SecureCheckout({ navigation }: SecureCheckoutProps) {
+export default function SecureCheckout({ navigation, route }: SecureCheckoutProps) {
   const [method, setMethod] = useState<PaymentMethod>('Credit / Debit');
   const [saveCard, setSaveCard] = useState(true);
 
@@ -137,7 +138,7 @@ export default function SecureCheckout({ navigation }: SecureCheckoutProps) {
 
         <Pressable
           accessibilityRole="button"
-          onPress={() => navigation.navigate('PaymentSuccess')}
+          onPress={() => navigation.navigate('PaymentSuccess', route?.params)}
           style={styles.payButton}
         >
           <Text style={styles.payText}>Pay $9.00 securely</Text>

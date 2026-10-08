@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -8,59 +9,69 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import api from '../services/api';
 
 interface HomeScreenProps {
   navigation: {
     goBack: () => void;
-    navigate: (screen: string) => void;
+    navigate: (screen: string, params?: Record<string, string>) => void;
   };
 }
 
 interface Facility {
+  _id: string;
   name: string;
   address: string;
-  distance: string;
-  slots: number;
-  price: string;
+  availableSlots: number;
+  carHourlyRate: number;
+  bikeHourlyRate: number;
 }
-
-const facilities: Facility[] = [
-  {
-    name: 'Central Plaza Parking',
-    address: '120 Market Street',
-    distance: '0.4 km',
-    slots: 12,
-    price: '$3/hr',
-  },
-  {
-    name: 'Parkside Garage',
-    address: '45 Park Avenue',
-    distance: '0.8 km',
-    slots: 8,
-    price: '$2.50/hr',
-  },
-  {
-    name: 'Downtown Parking Hub',
-    address: '8 Main Street',
-    distance: '1.2 km',
-    slots: 24,
-    price: '$4/hr',
-  },
-];
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const [query, setQuery] = useState('');
-  const [selectedFacility, setSelectedFacility] = useState(facilities[0].name);
+  const [facilities, setFacilities] = useState<Facility[]>([]);
+  const [selectedFacility, setSelectedFacility] = useState<Facility | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  useEffect(() => {
+    let isMounted = true;
+    const timeout = setTimeout(async () => {
+      setIsLoading(true);
+      setErrorMessage('');
+
+      try {
+        const response = await api.getFacilities(query);
+        if (isMounted) {
+          setFacilities(response.facilities);
+        }
+      } catch (error) {
+        console.error('Unable to load registered parking facilities:', error);
+        if (isMounted) {
+          setErrorMessage('Unable to load registered parking facilities. Please try again.');
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }, query.trim() ? 250 : 0);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timeout);
+    };
+  }, [query]);
 
   const visibleFacilities = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-    if (!normalizedQuery) {
-      return facilities;
+    return facilities;
+  }, [facilities]);
+
+  useEffect(() => {
+    if (!selectedFacility || !visibleFacilities.some((facility) => facility._id === selectedFacility._id)) {
+      setSelectedFacility(visibleFacilities[0] ?? null);
     }
-    return facilities.filter((facility) =>
-      `${facility.name} ${facility.address}`.toLowerCase().includes(normalizedQuery)
-    );
-  }, [query]);
+  }, [selectedFacility, visibleFacilities]);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
@@ -106,14 +117,23 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         </View>
 
         <View style={styles.facilityList}>
-          {visibleFacilities.map((facility) => {
-            const isSelected = selectedFacility === facility.name;
+          {isLoading && (
+            <View style={styles.stateContainer}>
+              <ActivityIndicator color="#176b58" />
+              <Text style={styles.stateText}>Loading registered parking facilities...</Text>
+            </View>
+          )}
+          {!isLoading && errorMessage && (
+            <Text style={styles.errorText}>{errorMessage}</Text>
+          )}
+          {!isLoading && !errorMessage && visibleFacilities.map((facility) => {
+            const isSelected = selectedFacility?._id === facility._id;
             return (
               <Pressable
                 accessibilityRole="button"
                 accessibilityState={{ selected: isSelected }}
                 key={facility.name}
-                onPress={() => setSelectedFacility(facility.name)}
+                onPress={() => setSelectedFacility(facility)}
                 style={[styles.facilityCard, isSelected && styles.selectedCard]}
               >
                 <View style={styles.parkingIcon}>
@@ -122,25 +142,30 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                 <View style={styles.facilityDetails}>
                   <Text style={styles.facilityName}>{facility.name}</Text>
                   <Text style={styles.facilityMeta}>
-                    {facility.address} · {facility.distance}
+                    {facility.address}
                   </Text>
-                  <Text style={styles.slots}>{facility.slots} slots live</Text>
+                  <Text style={styles.slots}>{facility.availableSlots} slots live</Text>
                 </View>
-                <Text style={styles.price}>{facility.price}</Text>
+                <Text style={styles.price}>
+                  From ${Math.min(facility.carHourlyRate, facility.bikeHourlyRate).toFixed(2)}/hr
+                </Text>
               </Pressable>
             );
           })}
-          {visibleFacilities.length === 0 && (
+          {!isLoading && !errorMessage && visibleFacilities.length === 0 && (
             <Text style={styles.emptyState}>No facilities match your search.</Text>
           )}
         </View>
       </ScrollView>
       <View style={styles.footer}>
-        <Text style={styles.selectedLabel}>Selected: {selectedFacility}</Text>
+        <Text style={styles.selectedLabel}>
+          {selectedFacility ? `Selected: ${selectedFacility.name}` : 'Select a registered facility'}
+        </Text>
         <Pressable
           accessibilityRole="button"
-          onPress={() => navigation.navigate('ChooseSlot')}
-          style={styles.continueButton}
+          disabled={!selectedFacility}
+          onPress={() => selectedFacility && navigation.navigate('ChooseSlot', { facilityName: selectedFacility.name })}
+          style={[styles.continueButton, !selectedFacility && styles.disabledButton]}
         >
           <Text style={styles.continueText}>Choose a facility</Text>
           <Text style={styles.continueArrow}>→</Text>
@@ -157,7 +182,7 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 24,
-    paddingBottom: 140,
+    paddingBottom: 36,
   },
   header: {
     alignItems: 'center',
@@ -194,6 +219,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
     marginTop: 24,
+  },
+  stateContainer: {
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 32,
+  },
+  stateText: {
+    color: '#63706c',
+    fontSize: 14,
+  },
+  errorText: {
+    color: '#b42318',
+    fontSize: 14,
+    marginTop: 24,
+    textAlign: 'center',
+  },
+  disabledButton: {
+    opacity: 0.5,
   },
   progressActive: {
     backgroundColor: '#1f8068',
@@ -330,6 +373,25 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 21,
     marginLeft: 10,
+  },
+  bottomNav: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 14,
+  },
+  navItem: {
+    alignItems: 'center',
+    gap: 3,
+    width: '31%',
+  },
+  navIcon: {
+    color: '#176b58',
+    fontSize: 18,
+  },
+  navLabel: {
+    color: '#66736f',
+    fontSize: 11,
   },
 });
 

@@ -13,12 +13,13 @@ interface ChooseSlotProps {
     goBack: () => void;
     navigate: (screen: string, params?: Record<string, string>) => void;
   };
+  route?: { params?: { facilityName?: string } };
 }
 
 const dates = ['14', '15', '16', '17', '18', '19', '20'];
 const slots = ['A1', 'A2', 'A3', 'A5', 'B1', 'B4'];
 
-export default function ChooseSlot({ navigation }: ChooseSlotProps) {
+export default function ChooseSlot({ navigation, route }: ChooseSlotProps) {
   const [selectedDate, setSelectedDate] = useState('17');
   const [slotType, setSlotType] = useState<'Car' | 'Bike'>('Car');
   const [selectedSlot, setSelectedSlot] = useState('A3');
@@ -114,6 +115,7 @@ export default function ChooseSlot({ navigation }: ChooseSlotProps) {
               date: `${selectedDate} Sep 2026`,
               slot: selectedSlot,
               type: slotType,
+              facilityName: route?.params?.facilityName || 'Central Plaza Parking',
             })
           }
           style={styles.confirmButton}

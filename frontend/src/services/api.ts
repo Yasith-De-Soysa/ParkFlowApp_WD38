@@ -63,18 +63,49 @@ class ApiService {
     const response = await this.api.post('/auth/register', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
-    await AsyncStorage.setItem('parkflow.auth.token', response.token);
-    return response;
+    const data = unwrapResponse(response);
+    await AsyncStorage.setItem('parkflow.auth.token', data.token);
+    return data;
   }
 
   public async login(payload: { email: string; password: string }) {
     const response = await this.api.post('/auth/login', payload);
-    await AsyncStorage.setItem('parkflow.auth.token', response.token);
-    return response;
+    const data = unwrapResponse(response);
+    await AsyncStorage.setItem('parkflow.auth.token', data.token);
+    return data;
   }
 
   public async getCurrentUser() {
     return this.api.get('/auth/me');
+  }
+
+  public async getMyReservations() {
+    const response = await this.api.get<{ reservations: Array<{
+      _id: string;
+      reservationCode: string;
+      facilityName: string;
+      facilityAddress?: string;
+      date: string;
+      time: string;
+      slot: string;
+      vehicleType: 'Car' | 'Bike';
+      amount: number;
+      status: 'confirmed' | 'cancelled';
+    }> }>('/reservations/me');
+    return unwrapResponse(response);
+  }
+
+  public async createReservation(payload: {
+    facilityName: string;
+    facilityAddress?: string;
+    date: string;
+    time: string;
+    slot: string;
+    vehicleType: 'Car' | 'Bike';
+    amount: number;
+  }) {
+    const response = await this.api.post<{ reservation: { reservationCode: string } }>('/reservations', payload);
+    return unwrapResponse(response);
   }
 
   public async updateCurrentUser(payload: {
@@ -193,8 +224,9 @@ class ApiService {
 
   public async adminLogin(payload: { email: string; password: string }) {
     const response = await this.api.post('/admin/login', payload);
-    await AsyncStorage.setItem('parkflow.auth.token', response.token);
-    return response;
+    const data = unwrapResponse(response);
+    await AsyncStorage.setItem('parkflow.auth.token', data.token);
+    return data;
   }
 
   public async createOwnerAccount(payload: { email: string; password: string }) {
@@ -240,6 +272,13 @@ function appendImage(formData: FormData, uri?: string) {
     name: fileName,
     type: `image/${extension === 'jpg' ? 'jpeg' : extension}`,
   } as any);
+}
+
+function unwrapResponse<T>(response: T | { data: T }): T {
+  if (typeof response === 'object' && response !== null && 'data' in response) {
+    return response.data;
+  }
+  return response;
 }
 
 export default new ApiService();
