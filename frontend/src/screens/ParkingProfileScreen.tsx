@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import api from '../services/api';
 
 type OwnerFacility = {
@@ -27,6 +27,7 @@ type OwnerFacility = {
 };
 
 export default function ParkingProfileScreen({ navigation }: { navigation: any }) {
+  const insets = useSafeAreaInsets();
   const [facility, setFacility] = useState<OwnerFacility | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -122,7 +123,7 @@ export default function ParkingProfileScreen({ navigation }: { navigation: any }
         )}
       </ScrollView>
 
-      <View style={styles.bottomNav}>
+      <View style={[styles.bottomNav, { bottom: insets.bottom + 15 }]}>
         <NavItem icon="⌕" label="Explore" onPress={() => navigation.navigate('OwnerHome')} />
         <NavItem icon="▦" label="Manage" onPress={() => navigation.navigate('OwnerManage')} />
         <NavItem icon="P" label="Parking profile" active onPress={() => navigation.navigate('ParkingProfile')} />
@@ -202,12 +203,12 @@ const styles = StyleSheet.create({
   disabledButtonText: { color: '#66736f' },
   pendingNotice: { padding: 13, borderRadius: 12, backgroundColor: '#fff4d6' },
   pendingNoticeText: { color: '#8a6412', fontSize: 13, lineHeight: 18 },
-  bottomNav: { position: 'absolute', left: 10, right: 10, bottom: 14, height: 68, paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', borderRadius: 16, backgroundColor: '#fff', shadowColor: '#17332c', shadowOpacity: 0.1, shadowRadius: 10, elevation: 4 },
-  navItem: { alignItems: 'center', gap: 3, minWidth: 80 },
-  navIcon: { width: 32, height: 30, alignItems: 'center', justifyContent: 'center', borderRadius: 9 },
-  activeNavIcon: { backgroundColor: '#e5f3ee' },
-  navIconText: { color: '#66736f', fontSize: 20, fontWeight: '700' },
-  activeNavIconText: { color: '#176b58' },
-  navLabel: { color: '#66736f', fontSize: 11, fontWeight: '600' },
-  activeNavLabel: { color: '#176b58' },
+  bottomNav: { position: 'absolute', left: 17, right: 17, height: 72, paddingHorizontal: 16, paddingVertical: 10, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderRadius: 20, borderWidth: 1, borderColor: '#dde5e2', backgroundColor: '#fff', shadowColor: '#17332c', shadowOpacity: 0.08, shadowRadius: 9, elevation: 3 },
+  navItem: { width: '31%', alignItems: 'center', gap: 4 },
+  navIcon: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: '#f4f7f6' },
+  activeNavIcon: { backgroundColor: '#176b58' },
+  navIconText: { color: '#66736f', fontSize: 18 },
+  activeNavIconText: { color: '#fff' },
+  navLabel: { color: '#66736f', fontSize: 12 },
+  activeNavLabel: { color: '#176b58', fontWeight: '600' },
 });
