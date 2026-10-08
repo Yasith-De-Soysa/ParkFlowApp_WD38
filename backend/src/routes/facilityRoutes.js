@@ -7,6 +7,7 @@ import {
   listOwnerFacilities,
   registerFacility,
   updateSlotAvailability,
+  updateFacilityReview,
   updateOwnerFacility,
 } from '../controllers/facilityController.js';
 import { authenticate, requireRole } from '../middleware/auth.js';
@@ -21,5 +22,6 @@ router.get('/', listFacilities);
 router.post('/', authenticate, requireRole('owner'), registerFacility);
 router.get('/:facilityId/reviews', listFacilityReviews);
 router.post('/:facilityId/reviews', authenticate, addFacilityReview);
+router.put('/:facilityId/reviews/:reviewId', authenticate, updateFacilityReview);
 
 export default router;

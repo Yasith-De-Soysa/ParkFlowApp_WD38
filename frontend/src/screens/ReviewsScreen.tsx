@@ -15,6 +15,7 @@ import api from '../services/api';
 
 type Review = {
   _id: string;
+  reviewerId: string;
   reviewerName: string;
   rating: number;
   comment: string;
@@ -36,6 +37,8 @@ export default function ReviewsScreen({
   const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(true);
   const [posting, setPosting] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState('');
+  const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
 
   const loadReviews = useCallback(async () => {
     try {
@@ -53,21 +56,29 @@ export default function ReviewsScreen({
 
   useEffect(() => {
     void loadReviews();
+    void api.getCurrentUser()
+      .then((response) => setCurrentUserId(response.user?._id || response.user?.id || ''))
+      .catch((error) => console.error('Unable to load current user for review editing:', error));
   }, [loadReviews]);
 
-  const postReview = async () => {
+  const saveReview = async () => {
     if (!rating || !comment.trim()) {
       Alert.alert('Incomplete review', 'Choose a star rating and write a review.');
       return;
     }
     setPosting(true);
     try {
-      const response = await api.addFacilityReview(facilityId, { rating, comment: comment.trim() });
-      setReviews((current) => [response.review, ...current]);
+      const response = editingReviewId
+        ? await api.updateFacilityReview(facilityId, editingReviewId, { rating, comment: comment.trim() })
+        : await api.addFacilityReview(facilityId, { rating, comment: comment.trim() });
+      setReviews((current) => editingReviewId
+        ? current.map((review) => review._id === editingReviewId ? response.review : review)
+        : [response.review, ...current]);
       setAverage(response.ratingAverage);
       setCount(response.ratingCount);
       setRating(0);
       setComment('');
+      setEditingReviewId(null);
     } catch (error) {
       const message = axios.isAxiosError(error)
         ? error.response?.data?.error?.message || 'Unable to post your review.'
@@ -76,6 +87,15 @@ export default function ReviewsScreen({
     } finally {
       setPosting(false);
     }
+  };
+
+  const beginEditing = (review: Review) => {
+    if (!currentUserId || String(review.reviewerId) !== String(currentUserId)) {
+      return;
+    }
+    setEditingReviewId(review._id);
+    setRating(review.rating);
+    setComment(review.comment);
   };
 
   return (
@@ -100,7 +120,7 @@ export default function ReviewsScreen({
         </View>
 
         <View style={styles.reviewCard}>
-          <Text style={styles.cardTitle}>Leave a review</Text>
+          <Text style={styles.cardTitle}>{editingReviewId ? 'Edit your review' : 'Leave a review'}</Text>
           <View style={styles.ratingPicker}>
             {[1, 2, 3, 4, 5].map((value) => (
               <Pressable key={value} onPress={() => setRating(value)} accessibilityLabel={`${value} stars`}>
@@ -117,9 +137,14 @@ export default function ReviewsScreen({
             style={styles.commentInput}
             maxLength={500}
           />
-          <Pressable style={[styles.postButton, posting && styles.disabled]} onPress={() => void postReview()} disabled={posting}>
-            <Text style={styles.postButtonText}>{posting ? 'Posting…' : 'Post Review'}</Text>
+          <Pressable style={[styles.postButton, posting && styles.disabled]} onPress={() => void saveReview()} disabled={posting}>
+            <Text style={styles.postButtonText}>{posting ? 'Saving…' : editingReviewId ? 'Update Review' : 'Post Review'}</Text>
           </Pressable>
+          {editingReviewId && (
+            <Pressable onPress={() => { setEditingReviewId(null); setRating(0); setComment(''); }}>
+              <Text style={styles.cancelEdit}>Cancel editing</Text>
+            </Pressable>
+          )}
         </View>
 
         <Text style={styles.recentTitle}>Recent comments</Text>
@@ -135,6 +160,15 @@ export default function ReviewsScreen({
                 <Text style={styles.date}>{formatDate(review.createdAt)}</Text>
               </View>
               <Text style={styles.commentText}>{review.comment}</Text>
+              {currentUserId && String(review.reviewerId) === String(currentUserId) && (
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => beginEditing(review)}
+                  style={styles.editButton}
+                >
+                  <Text style={styles.editButtonText}>Edit review</Text>
+                </Pressable>
+              )}
             </View>
           ))
         )}
@@ -172,6 +206,7 @@ const styles = StyleSheet.create({
   commentInput: { height: 74, padding: 12, borderRadius: 13, color: '#17201e', backgroundColor: '#f2f6f4', textAlignVertical: 'top', fontSize: 13 },
   postButton: { height: 52, alignItems: 'center', justifyContent: 'center', borderRadius: 13, backgroundColor: '#176b58' },
   postButtonText: { color: '#fff', fontSize: 15, fontWeight: '800' },
+  cancelEdit: { color: '#66736f', fontSize: 13, fontWeight: '700', textAlign: 'center' },
   disabled: { opacity: 0.6 },
   recentTitle: { color: '#17201e', fontSize: 16, fontWeight: '800', marginTop: 2 },
   commentCard: { padding: 15, borderRadius: 14, backgroundColor: '#fff', gap: 7 },
@@ -179,5 +214,7 @@ const styles = StyleSheet.create({
   reviewer: { color: '#17201e', fontSize: 13, fontWeight: '800' },
   date: { color: '#66736f', fontSize: 11 },
   commentText: { color: '#17201e', fontSize: 13, lineHeight: 19 },
+  editButton: { alignSelf: 'flex-start', marginTop: 3 },
+  editButtonText: { color: '#176b58', fontSize: 13, fontWeight: '800' },
   empty: { color: '#66736f', paddingVertical: 10 },
 });

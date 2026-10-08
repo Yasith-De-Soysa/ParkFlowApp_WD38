@@ -333,3 +333,40 @@ export const addFacilityReview = async (req, res, next) => {
     return next(error);
   }
 };
+
+export const updateFacilityReview = async (req, res, next) => {
+  try {
+    const rating = Number(req.body.rating);
+    const comment = typeof req.body.comment === 'string' ? req.body.comment.trim() : '';
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+      return res.status(400).json({ error: { message: 'Rating must be a whole number from 1 to 5.' } });
+    }
+    if (!comment || comment.length > 500) {
+      return res.status(400).json({ error: { message: 'Review text is required and must be 500 characters or fewer.' } });
+    }
+
+    const facility = await ParkingFacility.findOne({
+      _id: req.params.facilityId,
+      status: { $in: ['pending', 'active'] },
+    });
+    if (!facility) {
+      return res.status(404).json({ error: { message: 'Parking facility not found.' } });
+    }
+
+    const review = facility.reviews.id(req.params.reviewId);
+    if (!review) {
+      return res.status(404).json({ error: { message: 'Review not found.' } });
+    }
+    if (review.reviewerId.toString() !== req.user.userId) {
+      return res.status(403).json({ error: { message: 'You can only edit your own review.' } });
+    }
+
+    review.rating = rating;
+    review.comment = comment;
+    await facility.save();
+
+    return res.json({ review, ...reviewSummary(facility) });
+  } catch (error) {
+    return next(error);
+  }
+};

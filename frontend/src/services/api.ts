@@ -245,6 +245,7 @@ class ApiService {
     return this.api.get<{
       reviews: Array<{
         _id: string;
+        reviewerId: string;
         reviewerName: string;
         rating: number;
         comment: string;
@@ -257,6 +258,14 @@ class ApiService {
 
   public async addFacilityReview(facilityId: string, payload: { rating: number; comment: string }) {
     return this.api.post(`/facilities/${facilityId}/reviews`, payload);
+  }
+
+  public async updateFacilityReview(
+    facilityId: string,
+    reviewId: string,
+    payload: { rating: number; comment: string },
+  ) {
+    return this.api.put(`/facilities/${facilityId}/reviews/${reviewId}`, payload);
   }
 }
 
