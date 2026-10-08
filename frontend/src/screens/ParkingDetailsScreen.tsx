@@ -118,12 +118,19 @@ export default function ParkingDetailsScreen({
           <Pressable
             style={styles.primaryButton}
             accessibilityRole="button"
+            onPress={() => navigation.navigate('ChooseSlot', { facilityName: facility.name })}
+          >
+            <Text style={styles.primaryButtonText}>Add a reservation</Text>
+          </Pressable>
+          <Pressable
+            style={styles.secondaryButton}
+            accessibilityRole="button"
             onPress={() => Linking.openURL(`tel:${facility.contactNumber}`)}
           >
-            <Text style={styles.primaryButtonText}>Contact facility</Text>
+            <Text style={styles.secondaryButtonText}>Contact facility</Text>
           </Pressable>
-          <Pressable style={styles.secondaryButton} onPress={() => navigation.goBack()}>
-            <Text style={styles.secondaryButtonText}>Back to parking</Text>
+          <Pressable style={styles.backActionButton} onPress={() => navigation.goBack()}>
+            <Text style={styles.backActionText}>Back to parking</Text>
           </Pressable>
         </View>
       </ScrollView>
@@ -210,4 +217,6 @@ const styles = StyleSheet.create({
   primaryButtonText: { color: '#fff', fontSize: 15, fontWeight: '800' },
   secondaryButton: { minHeight: 48, borderRadius: 14, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#176b58' },
   secondaryButtonText: { color: '#176b58', fontSize: 15, fontWeight: '700' },
+  backActionButton: { minHeight: 42, alignItems: 'center', justifyContent: 'center' },
+  backActionText: { color: '#66736f', fontSize: 14, fontWeight: '600' },
 });
