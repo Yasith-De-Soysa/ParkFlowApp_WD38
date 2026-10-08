@@ -1,4 +1,4 @@
-import { useCallback, useRef, useEffect } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 interface UseApiOptions {
   retry?: number;
@@ -9,9 +9,9 @@ export const useApi = <T,>(
   apiCall: () => Promise<T>,
   options: UseApiOptions = {}
 ) => {
-  const [data, setData] = React.useState<T | null>(null);
-  const [loading, setLoading] = React.useState(false);
-  const [error, setError] = React.useState<Error | null>(null);
+  const [data, setData] = useState<T | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
   const retryCount = useRef(0);
   const { retry = 3, timeout = 10000 } = options;
 

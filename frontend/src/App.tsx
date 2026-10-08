@@ -6,21 +6,11 @@ import * as NavigationBar from 'expo-navigation-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import RegistrationScreen from './screens/RegistrationScreen';
-import LoginScreen from './screens/LoginScreen';
-import OnboardingScreen from './screens/OnboardingScreen';
-import ProfileScreen from './screens/ProfileScreen';
-import OwnerRegistrationScreen from './screens/OwnerRegistrationScreen';
-import HomeMapScreen from './screens/HomeMapScreen';
-import EditProfileScreen from './screens/EditProfileScreen';
-import ParkingDetailsScreen from './screens/ParkingDetailsScreen';
-import ReviewsScreen from './screens/ReviewsScreen';
-import ParkingProfileScreen from './screens/ParkingProfileScreen';
-import OwnerManageScreen from './screens/OwnerManageScreen';
-import UpdateSlotsScreen from './screens/UpdateSlotsScreen';
-import AdminDashboardScreen from './screens/AdminDashboardScreen';
-import OwnerRegistrationStatusScreen from './screens/OwnerRegistrationStatusScreen';
-import EditParkingProfileScreen from './screens/EditParkingProfileScreen';
+import HomeScreen from './screens/SelectParking';
+import ChooseSlot from './screens/ChooseSlot';
+import ConfirmReservation from './screens/ConfirmReservation';
+import SecureCheckout from './screens/SecureCheckout';
+import PaymentSuccess from './screens/PaymentSuccess';
 
 const Stack = createNativeStackNavigator();
 
@@ -49,53 +39,12 @@ export default function App() {
     <SafeAreaProvider>
       <StatusBar hidden={false} style="dark" backgroundColor="#f4f7f6" />
       <NavigationContainer>
-        <Stack.Navigator initialRouteName={hasOpened ? 'Login' : 'Onboarding'}>
-          <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
-          <Stack.Screen name="AdminDashboard" component={AdminDashboardScreen} options={{ headerShown: false }} />
-          <Stack.Screen name="Home" component={HomeMapScreen} options={{ headerShown: false }} />
-          <Stack.Screen name="OwnerHome" component={HomeMapScreen} options={{ headerShown: false }} />
-          <Stack.Screen name="ParkingDetails" component={ParkingDetailsScreen} options={{ headerShown: false }} />
-          <Stack.Screen name="Reviews" component={ReviewsScreen} options={{ headerShown: false }} />
-          <Stack.Screen name="ParkingProfile" component={ParkingProfileScreen} options={{ headerShown: false }} />
-          <Stack.Screen name="OwnerManage" component={OwnerManageScreen} options={{ headerShown: false }} />
-          <Stack.Screen name="UpdateSlots" component={UpdateSlotsScreen} options={{ headerShown: false }} />
-          <Stack.Screen name="OwnerRegistrationStatus" component={OwnerRegistrationStatusScreen} options={{ headerShown: false }} />
-          <Stack.Screen name="EditParkingProfile" component={EditParkingProfileScreen} options={{ headerShown: false }} />
-          <Stack.Screen name="Profile" component={ProfileScreen} options={{ headerShown: false }} />
-          <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ headerShown: false }} />
-          <Stack.Screen
-            name="OwnerRegistration"
-            component={OwnerRegistrationScreen}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="Registration"
-            component={RegistrationScreen}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen name="Onboarding" options={{ headerShown: false }}>
-            {(props) => (
-              <OnboardingScreen
-                {...props}
-                onComplete={async () => {
-                  try {
-                    await AsyncStorage.setItem('parkflow.onboarding.completed', 'true');
-                    props.navigation.replace('Registration');
-                  } catch (error) {
-                    console.error('Unable to save onboarding state:', error);
-                  }
-                }}
-                onLogin={async () => {
-                  try {
-                    await AsyncStorage.setItem('parkflow.onboarding.completed', 'true');
-                    props.navigation.replace('Login');
-                  } catch (error) {
-                    console.error('Unable to save onboarding state:', error);
-                  }
-                }}
-              />
-            )}
-          </Stack.Screen>
+        <Stack.Navigator initialRouteName="Home">
+          <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="ChooseSlot" component={ChooseSlot} options={{ headerShown: false }} />
+          <Stack.Screen name="ConfirmReservation" component={ConfirmReservation} options={{ headerShown: false }} />
+          <Stack.Screen name="SecureCheckout" component={SecureCheckout} options={{ headerShown: false }} />
+          <Stack.Screen name="PaymentSuccess" component={PaymentSuccess} options={{ headerShown: false }} />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>
