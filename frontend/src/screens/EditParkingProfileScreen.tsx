@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../services/api';
 
@@ -15,6 +16,7 @@ type Facility = {
   bikeSlots: number;
   carHourlyRate: number;
   bikeHourlyRate: number;
+  imageUri?: string;
 };
 
 export default function EditParkingProfileScreen({ navigation, route }: { navigation: any; route: any }) {
@@ -27,7 +29,27 @@ export default function EditParkingProfileScreen({ navigation, route }: { naviga
   const [bikeSlots, setBikeSlots] = useState(String(facility.bikeSlots));
   const [carHourlyRate, setCarHourlyRate] = useState(String(facility.carHourlyRate));
   const [bikeHourlyRate, setBikeHourlyRate] = useState(String(facility.bikeHourlyRate));
+  const [imageUri, setImageUri] = useState(facility.imageUri);
+  const [newImageUri, setNewImageUri] = useState<string>();
   const [saving, setSaving] = useState(false);
+
+  const pickImage = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (permission.status !== 'granted') {
+      Alert.alert('Permission required', 'Allow photo access to update the facility image.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+    if (!result.canceled) {
+      setNewImageUri(result.assets[0].uri);
+      setImageUri(result.assets[0].uri);
+    }
+  };
 
   const submit = async () => {
     if (!ownerName.trim() || !contactNumber.trim() || !name.trim() || !address.trim()) {
@@ -49,6 +71,8 @@ export default function EditParkingProfileScreen({ navigation, route }: { naviga
         bikeSlots: values[1],
         carHourlyRate: values[2],
         bikeHourlyRate: values[3],
+        imageUri: newImageUri ? undefined : facility.imageUri,
+        imageFileUri: newImageUri,
       });
       Alert.alert('Update submitted for review', 'Your approved parking profile will remain unchanged until an admin approves this update.', [
         { text: 'OK', onPress: () => navigation.goBack() },
@@ -72,6 +96,17 @@ export default function EditParkingProfileScreen({ navigation, route }: { naviga
           <Field label="Contact number" value={contactNumber} onChangeText={setContactNumber} keyboardType="phone-pad" />
           <Field label="Parking lot name" value={name} onChangeText={setName} />
           <Field label="Address" value={address} onChangeText={setAddress} multiline />
+          <View style={styles.imageSection}>
+            <Text style={styles.label}>Facility image</Text>
+            <Pressable style={styles.imagePicker} onPress={pickImage} accessibilityRole="button">
+              {imageUri ? (
+                <Image source={{ uri: imageUri }} style={styles.previewImage} />
+              ) : (
+                <Text style={styles.imagePlaceholder}>No image uploaded</Text>
+              )}
+              <Text style={styles.imagePickerText}>{newImageUri ? 'Image selected' : 'Tap to choose a new image'}</Text>
+            </Pressable>
+          </View>
           <View style={styles.row}>
             <Field label="Car slots" value={carSlots} onChangeText={setCarSlots} keyboardType="numeric" compact />
             <Field label="Bike slots" value={bikeSlots} onChangeText={setBikeSlots} keyboardType="numeric" compact />
@@ -110,6 +145,11 @@ const styles = StyleSheet.create({
   input: { minHeight: 48, borderWidth: 1, borderColor: '#d9e2de', borderRadius: 12, backgroundColor: '#fff', color: '#17201e', paddingHorizontal: 13, fontSize: 15 },
   multiline: { minHeight: 78, paddingTop: 12, textAlignVertical: 'top' },
   row: { flexDirection: 'row', gap: 10 },
+  imageSection: { gap: 6 },
+  imagePicker: { minHeight: 150, alignItems: 'center', justifyContent: 'center', gap: 8, padding: 12, borderWidth: 1, borderColor: '#d9e2de', borderRadius: 12, backgroundColor: '#fff' },
+  previewImage: { width: '100%', height: 130, borderRadius: 10, resizeMode: 'cover' },
+  imagePlaceholder: { color: '#66736f', fontSize: 14 },
+  imagePickerText: { color: '#176b58', fontSize: 13, fontWeight: '700' },
   notice: { padding: 13, borderRadius: 12, backgroundColor: '#e8f4f0' },
   noticeText: { color: '#176b58', fontSize: 13, lineHeight: 18 },
   button: { height: 52, borderRadius: 13, backgroundColor: '#176b58', alignItems: 'center', justifyContent: 'center', marginTop: 3 },

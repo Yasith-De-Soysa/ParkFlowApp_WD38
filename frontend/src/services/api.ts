@@ -151,9 +151,28 @@ class ApiService {
     bikeAvailableSlots: number;
     carHourlyRate: number;
     bikeHourlyRate: number;
+    pricingCurrency: 'LKR';
     imageUri?: string;
   }) {
-    return this.api.post('/facilities', payload);
+    const formData = new FormData();
+    formData.append('ownerName', payload.ownerName);
+    formData.append('ownerEmail', payload.ownerEmail);
+    formData.append('contactNumber', payload.contactNumber);
+    formData.append('name', payload.name);
+    formData.append('address', payload.address);
+    formData.append('latitude', String(payload.latitude));
+    formData.append('longitude', String(payload.longitude));
+    formData.append('carSlots', String(payload.carSlots));
+    formData.append('bikeSlots', String(payload.bikeSlots));
+    formData.append('carAvailableSlots', String(payload.carAvailableSlots));
+    formData.append('bikeAvailableSlots', String(payload.bikeAvailableSlots));
+    formData.append('carHourlyRate', String(payload.carHourlyRate));
+    formData.append('bikeHourlyRate', String(payload.bikeHourlyRate));
+    appendImage(formData, payload.imageUri, 'image');
+
+    return this.api.post('/facilities', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
   }
 
   public async getFacilities(search = '') {
@@ -172,6 +191,7 @@ class ApiService {
       bikeAvailableSlots: number;
       carHourlyRate: number;
       bikeHourlyRate: number;
+      pricingCurrency: 'LKR';
       availableSlots: number;
       status: string;
       imageUri?: string;
@@ -211,8 +231,28 @@ class ApiService {
     bikeSlots: number;
     carHourlyRate: number;
     bikeHourlyRate: number;
+    imageUri?: string;
+    imageFileUri?: string;
   }) {
-    return this.api.put(`/facilities/${facilityId}`, payload);
+    const formData = new FormData();
+    formData.append('ownerName', payload.ownerName);
+    formData.append('contactNumber', payload.contactNumber);
+    formData.append('name', payload.name);
+    formData.append('address', payload.address);
+    formData.append('latitude', String(payload.latitude));
+    formData.append('longitude', String(payload.longitude));
+    formData.append('carSlots', String(payload.carSlots));
+    formData.append('bikeSlots', String(payload.bikeSlots));
+    formData.append('carHourlyRate', String(payload.carHourlyRate));
+    formData.append('bikeHourlyRate', String(payload.bikeHourlyRate));
+    if (payload.imageUri) {
+      formData.append('imageUri', payload.imageUri);
+    }
+    appendImage(formData, payload.imageFileUri, 'image');
+
+    return this.api.put(`/facilities/${facilityId}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
   }
 
   public async updateSlotAvailability(
@@ -275,14 +315,14 @@ class ApiService {
   }
 }
 
-function appendImage(formData: FormData, uri?: string) {
+function appendImage(formData: FormData, uri?: string, fieldName = 'avatar') {
   if (!uri || uri.startsWith('http://') || uri.startsWith('https://')) {
     return;
   }
 
   const fileName = uri.split('/').pop() || `avatar-${Date.now()}.jpg`;
   const extension = fileName.split('.').pop()?.toLowerCase() || 'jpg';
-  formData.append('avatar', {
+  formData.append(fieldName, {
     uri,
     name: fileName,
     type: `image/${extension === 'jpg' ? 'jpeg' : extension}`,

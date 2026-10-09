@@ -74,7 +74,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   }, [selectedFacility, visibleFacilities]);
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
       <ScrollView
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
@@ -147,7 +147,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                   <Text style={styles.slots}>{facility.availableSlots} slots live</Text>
                 </View>
                 <Text style={styles.price}>
-                  From ${Math.min(facility.carHourlyRate, facility.bikeHourlyRate).toFixed(2)}/hr
+                  From LKR {Math.min(facility.carHourlyRate, facility.bikeHourlyRate).toFixed(2)}/hr
                 </Text>
               </Pressable>
             );
@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 24,
-    paddingBottom: 36,
+    paddingBottom: 150,
   },
   header: {
     alignItems: 'center',
@@ -349,7 +349,8 @@ const styles = StyleSheet.create({
     borderTopColor: '#e1ebe7',
     borderTopWidth: 1,
     paddingHorizontal: 24,
-    paddingVertical: 14,
+    paddingTop: 14,
+    paddingBottom: 14,
   },
   selectedLabel: {
     color: '#74807d',

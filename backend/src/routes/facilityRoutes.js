@@ -12,15 +12,16 @@ import {
   updateOwnerFacility,
 } from '../controllers/facilityController.js';
 import { authenticate, requireRole } from '../middleware/auth.js';
+import { uploadFacilityImage } from '../middleware/upload.js';
 
 const router = express.Router();
 
 router.get('/check-name', checkFacilityName);
 router.get('/owner/me', authenticate, listOwnerFacilities);
-router.put('/:facilityId', authenticate, requireRole('owner'), updateOwnerFacility);
+router.put('/:facilityId', authenticate, requireRole('owner'), uploadFacilityImage.single('image'), updateOwnerFacility);
 router.patch('/:facilityId/availability', authenticate, requireRole('owner'), updateSlotAvailability);
 router.get('/', listFacilities);
-router.post('/', authenticate, requireRole('owner'), registerFacility);
+router.post('/', authenticate, requireRole('owner'), uploadFacilityImage.single('image'), registerFacility);
 router.get('/:facilityId/reviews', listFacilityReviews);
 router.post('/:facilityId/reviews', authenticate, addFacilityReview);
 router.put('/:facilityId/reviews/:reviewId', authenticate, updateFacilityReview);

@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { ParkingFacility } from '../models/ParkingFacility.js';
 
 mongoose.set('bufferCommands', false);
 
@@ -9,6 +10,10 @@ export const connectDB = async () => {
   });
 
   console.log(`MongoDB connected: ${conn.connection.host}`);
+  await ParkingFacility.updateMany(
+    { pricingCurrency: { $exists: false } },
+    { $set: { pricingCurrency: 'LKR' } },
+  );
   return conn;
 };
 

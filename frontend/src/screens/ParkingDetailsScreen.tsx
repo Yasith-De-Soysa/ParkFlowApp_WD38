@@ -26,6 +26,7 @@ export type ParkingFacility = {
   bikeSlots: number;
   carHourlyRate?: number;
   bikeHourlyRate?: number;
+  pricingCurrency?: 'LKR';
   availableSlots: number;
   imageUri?: string;
   status: string;
@@ -181,7 +182,7 @@ function PriceItem({ label, value }: { label: string; value?: number }) {
     <View style={styles.priceItem}>
       <Text style={styles.priceLabel}>{label}</Text>
       <Text style={styles.priceValue}>
-        {typeof value === 'number' ? `$${value.toFixed(2)}` : 'Not provided'}
+        {typeof value === 'number' ? `LKR ${value.toFixed(2)}` : 'Not provided'}
         {typeof value === 'number' && <Text style={styles.priceUnit}> / hour</Text>}
       </Text>
     </View>

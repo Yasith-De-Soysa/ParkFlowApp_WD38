@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { User } from '../models/User.js';
+import { imageDataUrl } from '../middleware/upload.js';
 
 const userResponse = (user) => ({
   id: user._id,
@@ -13,13 +14,6 @@ const userResponse = (user) => ({
   createdAt: user.createdAt,
   role: user.role,
 });
-
-const avatarUrl = (req) => {
-  if (!req.file) {
-    return undefined;
-  }
-  return `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
-};
 
 export const register = async (req, res, next) => {
   try {
@@ -52,7 +46,7 @@ export const register = async (req, res, next) => {
       password: passwordHash,
       vehicleType,
       vehicleNumber: vehicleNumber.trim(),
-      avatar: avatarUrl(req),
+      avatar: imageDataUrl(req.file),
     });
     const token = jwt.sign({ userId: user._id.toString(), email: user.email, role: user.role }, process.env.JWT_SECRET || 'development-secret', {
       expiresIn: '7d',
@@ -173,8 +167,9 @@ export const updateCurrentUser = async (req, res, next) => {
     user.phone = phone.trim();
     user.vehicleType = vehicleType;
     user.vehicleNumber = vehicleNumber.trim();
-    if (avatarUrl(req)) {
-      user.avatar = avatarUrl(req);
+    const avatar = imageDataUrl(req.file);
+    if (avatar) {
+      user.avatar = avatar;
     }
     if (password) {
       user.password = await bcrypt.hash(password, 12);

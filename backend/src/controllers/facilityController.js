@@ -1,5 +1,6 @@
 import { ParkingFacility } from '../models/ParkingFacility.js';
 import { User } from '../models/User.js';
+import { imageDataUrl } from '../middleware/upload.js';
 
 const normalizeName = (name) => name.trim().toLowerCase().replace(/\s+/g, ' ');
 
@@ -39,8 +40,8 @@ export const registerFacility = async (req, res, next) => {
       bikeSlots,
       carHourlyRate,
       bikeHourlyRate,
-      imageUri,
     } = req.body;
+    const imageUri = imageDataUrl(req.file) || req.body.imageUri;
     const normalizedName = typeof name === 'string' ? normalizeName(name) : '';
 
     const ownerEmail = req.user.email;
@@ -79,6 +80,7 @@ export const registerFacility = async (req, res, next) => {
       existingFacility.bikeAvailableSlots = existingFacility.bikeSlots;
       existingFacility.carHourlyRate = Number(carHourlyRate);
       existingFacility.bikeHourlyRate = Number(bikeHourlyRate);
+      existingFacility.pricingCurrency = 'LKR';
       existingFacility.imageUri = imageUri;
       existingFacility.status = 'pending';
       await existingFacility.save();
@@ -100,6 +102,7 @@ export const registerFacility = async (req, res, next) => {
       bikeAvailableSlots: Math.max(0, Number(bikeSlots) || 0),
       carHourlyRate: Number(carHourlyRate),
       bikeHourlyRate: Number(bikeHourlyRate),
+      pricingCurrency: 'LKR',
       imageUri,
     });
 
@@ -216,8 +219,9 @@ export const updateOwnerFacility = async (req, res, next) => {
   try {
     const {
       ownerName, contactNumber, name, address, latitude, longitude,
-      carSlots, bikeSlots, carHourlyRate, bikeHourlyRate, imageUri,
+      carSlots, bikeSlots, carHourlyRate, bikeHourlyRate,
     } = req.body;
+    const imageUri = imageDataUrl(req.file) || req.body.imageUri;
     const normalizedName = typeof name === 'string' ? normalizeName(name) : '';
 
     if (!ownerName?.trim() || !contactNumber?.trim() || !name?.trim() || !address?.trim()) {
@@ -266,7 +270,8 @@ export const updateOwnerFacility = async (req, res, next) => {
       bikeSlots: Math.max(0, Number(bikeSlots) || 0),
       carHourlyRate: Number(carHourlyRate),
       bikeHourlyRate: Number(bikeHourlyRate),
-      imageUri,
+      pricingCurrency: 'LKR',
+      imageUri: imageUri || facility.imageUri,
     };
     await facility.save();
     return res.status(202).json({ message: 'Update submitted for admin review.' });

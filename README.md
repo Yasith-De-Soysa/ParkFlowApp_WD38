@@ -53,7 +53,7 @@ The repository contains:
 - **Backend:** Node.js, Express, Helmet, CORS
 - **Database:** MongoDB and Mongoose
 - **Authentication:** JWT and bcryptjs
-- **Uploads:** Multer
+- **Uploads:** Multer memory uploads with MongoDB-backed image data
 
 ## Prerequisites
 
@@ -356,11 +356,18 @@ Use `GET /facilities?q=term` to search approved facilities by name or address.
 | `GET` | `/admin/facilities/pending` | Administrator |
 | `PATCH` | `/admin/facilities/:facilityId/review` | Administrator |
 
-Uploaded files are served from:
+### Image storage
 
-```text
-GET /uploads/<filename>
-```
+Profile avatars and parking facility registration images are uploaded to the
+API as multipart form data. The backend stores the image bytes as a
+base64 data URL in MongoDB and returns that data URL in the user or facility
+response. This means another phone can display the image without accessing the
+original phone's local file path or a shared project directory.
+
+Images are limited to 5 MB each. MongoDB is not an ideal large-scale binary
+asset store, so production deployments with many or very large images should
+use object storage such as S3 or GridFS and store only the resulting asset URL
+in MongoDB.
 
 ## Project structure
 
