@@ -77,7 +77,7 @@ export default function ReservationsScreen({ navigation }: { navigation: any }) 
               </View>
               <View style={styles.footer}>
                 <Text style={styles.code}>{reservation.reservationCode}</Text>
-                <Text style={styles.amount}>${reservation.amount.toFixed(2)}</Text>
+                <Text style={styles.amount}>LKR {reservation.amount.toFixed(2)}</Text>
               </View>
             </View>
           ))

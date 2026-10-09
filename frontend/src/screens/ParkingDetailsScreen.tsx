@@ -145,7 +145,12 @@ export default function ParkingDetailsScreen({
           <Pressable
             style={styles.primaryButton}
             accessibilityRole="button"
-            onPress={() => navigation.navigate('ChooseSlot', { facilityName: facility.name })}
+            onPress={() => navigation.navigate('ChooseSlot', {
+              facilityName: facility.name,
+              facilityAddress: facility.address,
+              carHourlyRate: facility.carHourlyRate ?? 0,
+              bikeHourlyRate: facility.bikeHourlyRate ?? 0,
+            })}
           >
             <Text style={styles.primaryButtonText}>Add a reservation</Text>
           </Pressable>

@@ -13,9 +13,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 interface SecureCheckoutProps {
   navigation: {
     goBack: () => void;
-    navigate: (screen: string, params?: Record<string, string>) => void;
+    navigate: (screen: string, params?: Record<string, unknown>) => void;
   };
-  route?: { params?: { date?: string; slot?: string; type?: string; facilityName?: string } };
+  route?: { params?: { amount?: number } };
 }
 
 type PaymentMethod = 'Credit / Debit' | 'Mobile Wallet' | 'QR Code';
@@ -29,6 +29,7 @@ const paymentMethods: PaymentMethod[] = [
 export default function SecureCheckout({ navigation, route }: SecureCheckoutProps) {
   const [method, setMethod] = useState<PaymentMethod>('Credit / Debit');
   const [saveCard, setSaveCard] = useState(true);
+  const amount = route?.params?.amount ?? 0;
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
@@ -53,7 +54,7 @@ export default function SecureCheckout({ navigation, route }: SecureCheckoutProp
 
         <View style={styles.amountCard}>
           <Text style={styles.amountLabel}>Reservation total</Text>
-          <Text style={styles.amount}>$9.00</Text>
+          <Text style={styles.amount}>LKR {amount.toFixed(2)}</Text>
         </View>
 
         <Text style={styles.sectionTitle}>Payment method</Text>
@@ -141,7 +142,7 @@ export default function SecureCheckout({ navigation, route }: SecureCheckoutProp
           onPress={() => navigation.navigate('PaymentSuccess', route?.params)}
           style={styles.payButton}
         >
-          <Text style={styles.payText}>Pay $9.00 securely</Text>
+          <Text style={styles.payText}>Pay LKR {amount.toFixed(2)} securely</Text>
         </Pressable>
       </ScrollView>
     </SafeAreaView>

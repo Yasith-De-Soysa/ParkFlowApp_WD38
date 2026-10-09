@@ -14,7 +14,7 @@ import api from '../services/api';
 interface HomeScreenProps {
   navigation: {
     goBack: () => void;
-    navigate: (screen: string, params?: Record<string, string>) => void;
+    navigate: (screen: string, params?: Record<string, unknown>) => void;
   };
 }
 
@@ -164,7 +164,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         <Pressable
           accessibilityRole="button"
           disabled={!selectedFacility}
-          onPress={() => selectedFacility && navigation.navigate('ChooseSlot', { facilityName: selectedFacility.name })}
+          onPress={() => selectedFacility && navigation.navigate('ChooseSlot', {
+            facilityName: selectedFacility.name,
+            facilityAddress: selectedFacility.address,
+            carHourlyRate: selectedFacility.carHourlyRate,
+            bikeHourlyRate: selectedFacility.bikeHourlyRate,
+          })}
           style={[styles.continueButton, !selectedFacility && styles.disabledButton]}
         >
           <Text style={styles.continueText}>Choose a facility</Text>

@@ -5,13 +5,19 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 interface ConfirmReservationProps {
   navigation: {
     goBack: () => void;
-    navigate: (screen: string, params?: Record<string, string>) => void;
+    navigate: (screen: string, params?: Record<string, unknown>) => void;
   };
   route?: {
     params?: {
       date?: string;
+      time?: string;
+      hours?: number;
       slot?: string;
       type?: string;
+      facilityName?: string;
+      facilityAddress?: string;
+      hourlyRate?: number;
+      amount?: number;
     };
   };
 }
@@ -21,8 +27,13 @@ export default function ConfirmReservation({
   route,
 }: ConfirmReservationProps) {
   const date = route?.params?.date ?? '17 Sep 2026';
+  const time = route?.params?.time ?? '10:00 AM - 11:00 AM';
   const slot = route?.params?.slot ?? 'A3';
   const type = route?.params?.type ?? 'Car';
+  const hours = route?.params?.hours ?? 1;
+  const hourlyRate = route?.params?.hourlyRate ?? 0;
+  const amount = route?.params?.amount ?? hourlyRate * hours;
+  const facilityName = route?.params?.facilityName ?? 'Central Plaza Parking';
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
@@ -55,20 +66,20 @@ export default function ConfirmReservation({
 
         <View style={styles.summaryCard}>
           <Text style={styles.label}>Facility</Text>
-          <Text style={styles.value}>Central Plaza Parking</Text>
+          <Text style={styles.value}>{facilityName}</Text>
 
           <Text style={styles.label}>Date</Text>
           <Text style={styles.value}>{date}</Text>
 
           <Text style={styles.label}>Time</Text>
-          <Text style={styles.value}>10:00 AM - 1:00 PM</Text>
+          <Text style={styles.value}>{time} · {hours} {hours === 1 ? 'hour' : 'hours'}</Text>
 
           <Text style={styles.label}>Slot</Text>
           <Text style={styles.value}>{slot} · {type}</Text>
 
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.total}>$9.00</Text>
+            <Text style={styles.total}>LKR {amount.toFixed(2)}</Text>
           </View>
         </View>
 

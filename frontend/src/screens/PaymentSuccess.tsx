@@ -6,9 +6,9 @@ import api from '../services/api';
 
 interface PaymentSuccessProps {
   navigation: {
-    navigate: (screen: string, params?: Record<string, string>) => void;
+    navigate: (screen: string, params?: Record<string, unknown>) => void;
   };
-  route?: { params?: { date?: string; slot?: string; type?: string; facilityName?: string } };
+  route?: { params?: { date?: string; time?: string; slot?: string; type?: string; facilityName?: string; amount?: number } };
 }
 
 export default function PaymentSuccess({ navigation, route }: PaymentSuccessProps) {
@@ -21,15 +21,15 @@ export default function PaymentSuccess({ navigation, route }: PaymentSuccessProp
     api.createReservation({
       facilityName: reservation?.facilityName || 'Central Plaza Parking',
       date: reservation?.date || '17 Sep 2026',
-      time: '10:00 AM - 1:00 PM',
+      time: reservation?.time || '10:00 AM - 11:00 AM',
       slot: reservation?.slot || 'A3',
       vehicleType: reservation?.type === 'Bike' ? 'Bike' : 'Car',
-      amount: 9,
+      amount: reservation?.amount || 0,
     })
       .then((response) => setReservationCode(response.reservation.reservationCode))
       .catch(() => Alert.alert('Reservation not saved', 'Payment succeeded, but we could not save your reservation.'))
       .finally(() => setSaving(false));
-  }, [reservation?.date, reservation?.facilityName, reservation?.slot, reservation?.type]);
+  }, [reservation?.amount, reservation?.date, reservation?.facilityName, reservation?.slot, reservation?.time, reservation?.type]);
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.content}>
@@ -41,7 +41,7 @@ export default function PaymentSuccess({ navigation, route }: PaymentSuccessProp
 
         <View style={styles.summaryCard}>
           <Text style={styles.summaryLabel}>PAID</Text>
-          <Text style={styles.amount}>$9.00</Text>
+          <Text style={styles.amount}>LKR {(reservation?.amount ?? 0).toFixed(2)}</Text>
           <View style={styles.divider} />
           <Text style={styles.detailLabel}>Reservation ID</Text>
           <Text style={styles.detailValue}>{saving ? 'Saving...' : reservationCode}</Text>
