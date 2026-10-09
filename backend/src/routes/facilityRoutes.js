@@ -2,6 +2,7 @@ import express from 'express';
 import {
   addFacilityReview,
   checkFacilityName,
+  deleteFacilityReview,
   listFacilities,
   listFacilityReviews,
   listOwnerFacilities,
@@ -23,5 +24,6 @@ router.post('/', authenticate, requireRole('owner'), registerFacility);
 router.get('/:facilityId/reviews', listFacilityReviews);
 router.post('/:facilityId/reviews', authenticate, addFacilityReview);
 router.put('/:facilityId/reviews/:reviewId', authenticate, updateFacilityReview);
+router.delete('/:facilityId/reviews/:reviewId', authenticate, deleteFacilityReview);
 
 export default router;

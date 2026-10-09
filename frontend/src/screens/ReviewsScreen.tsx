@@ -39,6 +39,7 @@ export default function ReviewsScreen({
   const [posting, setPosting] = useState(false);
   const [currentUserId, setCurrentUserId] = useState('');
   const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
+  const [deletingReviewId, setDeletingReviewId] = useState<string | null>(null);
 
   const loadReviews = useCallback(async () => {
     try {
@@ -96,6 +97,43 @@ export default function ReviewsScreen({
     setEditingReviewId(review._id);
     setRating(review.rating);
     setComment(review.comment);
+  };
+
+  const deleteReview = (review: Review) => {
+    if (!currentUserId || String(review.reviewerId) !== String(currentUserId) || deletingReviewId) {
+      return;
+    }
+
+    Alert.alert('Delete review?', 'This review and rating will be permanently removed.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () => {
+          void (async () => {
+            setDeletingReviewId(review._id);
+            try {
+              const response = await api.deleteFacilityReview(facilityId, review._id);
+              setReviews((current) => current.filter((item) => item._id !== review._id));
+              setAverage(response.ratingAverage);
+              setCount(response.ratingCount);
+              if (editingReviewId === review._id) {
+                setEditingReviewId(null);
+                setRating(0);
+                setComment('');
+              }
+            } catch (error) {
+              const message = axios.isAxiosError(error)
+                ? error.response?.data?.error?.message || 'Unable to delete your review.'
+                : 'Unable to delete your review.';
+              Alert.alert('Delete failed', message);
+            } finally {
+              setDeletingReviewId(null);
+            }
+          })();
+        },
+      },
+    ]);
   };
 
   return (
@@ -161,13 +199,25 @@ export default function ReviewsScreen({
               </View>
               <Text style={styles.commentText}>{review.comment}</Text>
               {currentUserId && String(review.reviewerId) === String(currentUserId) && (
-                <Pressable
-                  accessibilityRole="button"
-                  onPress={() => beginEditing(review)}
-                  style={styles.editButton}
-                >
-                  <Text style={styles.editButtonText}>Edit review</Text>
-                </Pressable>
+                <View style={styles.reviewActions}>
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={() => beginEditing(review)}
+                    style={styles.editButton}
+                  >
+                    <Text style={styles.editButtonText}>Edit review</Text>
+                  </Pressable>
+                  <Pressable
+                    accessibilityRole="button"
+                    disabled={deletingReviewId === review._id}
+                    onPress={() => deleteReview(review)}
+                    style={styles.deleteButton}
+                  >
+                    <Text style={styles.deleteButtonText}>
+                      {deletingReviewId === review._id ? 'Deleting…' : 'Delete review'}
+                    </Text>
+                  </Pressable>
+                </View>
               )}
             </View>
           ))
@@ -216,5 +266,8 @@ const styles = StyleSheet.create({
   commentText: { color: '#17201e', fontSize: 13, lineHeight: 19 },
   editButton: { alignSelf: 'flex-start', marginTop: 3 },
   editButtonText: { color: '#176b58', fontSize: 13, fontWeight: '800' },
+  reviewActions: { flexDirection: 'row', gap: 18, marginTop: 3 },
+  deleteButton: { alignSelf: 'flex-start' },
+  deleteButtonText: { color: '#b42318', fontSize: 13, fontWeight: '800' },
   empty: { color: '#66736f', paddingVertical: 10 },
 });

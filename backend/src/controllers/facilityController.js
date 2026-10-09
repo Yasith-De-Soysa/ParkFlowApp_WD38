@@ -370,3 +370,30 @@ export const updateFacilityReview = async (req, res, next) => {
     return next(error);
   }
 };
+
+export const deleteFacilityReview = async (req, res, next) => {
+  try {
+    const facility = await ParkingFacility.findOne({
+      _id: req.params.facilityId,
+      status: { $in: ['pending', 'active'] },
+    });
+    if (!facility) {
+      return res.status(404).json({ error: { message: 'Parking facility not found.' } });
+    }
+
+    const review = facility.reviews.id(req.params.reviewId);
+    if (!review) {
+      return res.status(404).json({ error: { message: 'Review not found.' } });
+    }
+    if (review.reviewerId.toString() !== req.user.userId) {
+      return res.status(403).json({ error: { message: 'You can only delete your own review.' } });
+    }
+
+    facility.reviews.pull(req.params.reviewId);
+    await facility.save();
+
+    return res.json({ ...reviewSummary(facility) });
+  } catch (error) {
+    return next(error);
+  }
+};

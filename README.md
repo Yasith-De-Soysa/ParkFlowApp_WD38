@@ -333,6 +333,7 @@ All routes are prefixed with `/api`.
 | `GET` | `/facilities/:facilityId/reviews` | Public |
 | `POST` | `/facilities/:facilityId/reviews` | JWT |
 | `PUT` | `/facilities/:facilityId/reviews/:reviewId` | JWT, review author only |
+| `DELETE` | `/facilities/:facilityId/reviews/:reviewId` | JWT, review author only |
 | `GET` | `/facilities/owner/me` | Owner |
 | `POST` | `/facilities` | Owner |
 | `PUT` | `/facilities/:facilityId` | Owner |

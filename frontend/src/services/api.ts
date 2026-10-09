@@ -267,6 +267,12 @@ class ApiService {
   ) {
     return this.api.put(`/facilities/${facilityId}/reviews/${reviewId}`, payload);
   }
+
+  public async deleteFacilityReview(facilityId: string, reviewId: string) {
+    return this.api.delete<{ ratingAverage: number; ratingCount: number }>(
+      `/facilities/${facilityId}/reviews/${reviewId}`,
+    );
+  }
 }
 
 function appendImage(formData: FormData, uri?: string) {
