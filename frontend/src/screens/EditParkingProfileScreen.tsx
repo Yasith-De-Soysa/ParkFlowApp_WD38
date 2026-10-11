@@ -29,6 +29,8 @@ export default function EditParkingProfileScreen({ navigation, route }: { naviga
   const [bikeSlots, setBikeSlots] = useState(String(facility.bikeSlots));
   const [carHourlyRate, setCarHourlyRate] = useState(String(facility.carHourlyRate));
   const [bikeHourlyRate, setBikeHourlyRate] = useState(String(facility.bikeHourlyRate));
+  const [ownerPassword, setOwnerPassword] = useState('');
+  const [confirmOwnerPassword, setConfirmOwnerPassword] = useState('');
   const [imageUri, setImageUri] = useState(facility.imageUri);
   const [newImageUri, setNewImageUri] = useState<string>();
   const [saving, setSaving] = useState(false);
@@ -61,6 +63,10 @@ export default function EditParkingProfileScreen({ navigation, route }: { naviga
       Alert.alert('Invalid values', 'Slots and hourly rates must be valid non-negative numbers.');
       return;
     }
+    if (ownerPassword && (ownerPassword.length < 6 || ownerPassword !== confirmOwnerPassword)) {
+      Alert.alert('Invalid password', 'Owner password must be at least 6 characters and match its confirmation.');
+      return;
+    }
     setSaving(true);
     try {
       await api.updateOwnerFacility(facility._id, {
@@ -71,6 +77,8 @@ export default function EditParkingProfileScreen({ navigation, route }: { naviga
         bikeSlots: values[1],
         carHourlyRate: values[2],
         bikeHourlyRate: values[3],
+        ownerPassword: ownerPassword || undefined,
+        confirmOwnerPassword: confirmOwnerPassword || undefined,
         imageUri: newImageUri ? undefined : facility.imageUri,
         imageFileUri: newImageUri,
       });
@@ -115,6 +123,21 @@ export default function EditParkingProfileScreen({ navigation, route }: { naviga
             <Field label="Car hourly rate" value={carHourlyRate} onChangeText={setCarHourlyRate} keyboardType="numeric" compact />
             <Field label="Bike hourly rate" value={bikeHourlyRate} onChangeText={setBikeHourlyRate} keyboardType="numeric" compact />
           </View>
+          <Text style={styles.passwordHeading}>Change owner password (optional)</Text>
+          <Field
+            label="New password"
+            value={ownerPassword}
+            onChangeText={setOwnerPassword}
+            placeholder="At least 6 characters"
+            secureTextEntry
+          />
+          <Field
+            label="Confirm new password"
+            value={confirmOwnerPassword}
+            onChangeText={setConfirmOwnerPassword}
+            placeholder="Re-enter password"
+            secureTextEntry
+          />
           <View style={styles.notice}><Text style={styles.noticeText}>Your current profile stays active while this change request is reviewed.</Text></View>
           <Pressable style={styles.button} onPress={submit} disabled={saving}>
             {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Submit for admin approval</Text>}
@@ -125,10 +148,10 @@ export default function EditParkingProfileScreen({ navigation, route }: { naviga
   );
 }
 
-function Field({ label, value, onChangeText, keyboardType = 'default', multiline = false, compact = false }: {
-  label: string; value: string; onChangeText: (value: string) => void; keyboardType?: 'default' | 'phone-pad' | 'numeric'; multiline?: boolean; compact?: boolean;
+function Field({ label, value, onChangeText, keyboardType = 'default', multiline = false, compact = false, placeholder, secureTextEntry = false }: {
+  label: string; value: string; onChangeText: (value: string) => void; keyboardType?: 'default' | 'phone-pad' | 'numeric'; multiline?: boolean; compact?: boolean; placeholder?: string; secureTextEntry?: boolean;
 }) {
-  return <View style={[styles.field, compact && styles.compactField]}><Text style={styles.label}>{label}</Text><TextInput style={[styles.input, multiline && styles.multiline]} value={value} onChangeText={onChangeText} keyboardType={keyboardType} multiline={multiline} placeholderTextColor="#66736f" /></View>;
+  return <View style={[styles.field, compact && styles.compactField]}><Text style={styles.label}>{label}</Text><TextInput style={[styles.input, multiline && styles.multiline]} value={value} onChangeText={onChangeText} keyboardType={keyboardType} multiline={multiline} placeholder={placeholder} placeholderTextColor="#66736f" secureTextEntry={secureTextEntry} /></View>;
 }
 
 const styles = StyleSheet.create({
@@ -151,6 +174,7 @@ const styles = StyleSheet.create({
   imagePlaceholder: { color: '#66736f', fontSize: 14 },
   imagePickerText: { color: '#176b58', fontSize: 13, fontWeight: '700' },
   notice: { padding: 13, borderRadius: 12, backgroundColor: '#e8f4f0' },
+  passwordHeading: { color: '#17201e', fontSize: 15, fontWeight: '800', marginTop: 3 },
   noticeText: { color: '#176b58', fontSize: 13, lineHeight: 18 },
   button: { height: 52, borderRadius: 13, backgroundColor: '#176b58', alignItems: 'center', justifyContent: 'center', marginTop: 3 },
   buttonText: { color: '#fff', fontWeight: '800', fontSize: 15 },

@@ -1,5 +1,6 @@
 import { ParkingFacility } from '../models/ParkingFacility.js';
 import { User } from '../models/User.js';
+import bcrypt from 'bcryptjs';
 import { imageDataUrl } from '../middleware/upload.js';
 
 const normalizeName = (name) => name.trim().toLowerCase().replace(/\s+/g, ' ');
@@ -40,6 +41,8 @@ export const registerFacility = async (req, res, next) => {
       bikeSlots,
       carHourlyRate,
       bikeHourlyRate,
+      ownerPassword,
+      confirmOwnerPassword,
     } = req.body;
     const imageUri = imageDataUrl(req.file) || req.body.imageUri;
     const normalizedName = typeof name === 'string' ? normalizeName(name) : '';
@@ -61,6 +64,9 @@ export const registerFacility = async (req, res, next) => {
       Number(bikeHourlyRate) < 0
     ) {
       return res.status(400).json({ error: { message: 'Please provide valid hourly rates for cars and bikes.' } });
+    }
+    if (!ownerPassword || ownerPassword.length < 6 || ownerPassword !== confirmOwnerPassword) {
+      return res.status(400).json({ error: { message: 'Owner password must be at least 6 characters and match its confirmation.' } });
     }
 
     const existingFacility = await ParkingFacility.findOne({ normalizedName });
@@ -84,6 +90,12 @@ export const registerFacility = async (req, res, next) => {
       existingFacility.imageUri = imageUri;
       existingFacility.status = 'pending';
       await existingFacility.save();
+      const owner = await User.findById(req.user.userId);
+      if (!owner) {
+        return res.status(404).json({ error: { message: 'Owner account not found.' } });
+      }
+      owner.password = await bcrypt.hash(ownerPassword, 12);
+      await owner.save();
       return res.status(201).json({ facility: existingFacility });
     }
 
@@ -105,6 +117,12 @@ export const registerFacility = async (req, res, next) => {
       pricingCurrency: 'LKR',
       imageUri,
     });
+    const owner = await User.findById(req.user.userId);
+    if (!owner) {
+      return res.status(404).json({ error: { message: 'Owner account not found.' } });
+    }
+    owner.password = await bcrypt.hash(ownerPassword, 12);
+    await owner.save();
 
     return res.status(201).json({ facility });
   } catch (error) {
@@ -220,6 +238,7 @@ export const updateOwnerFacility = async (req, res, next) => {
     const {
       ownerName, contactNumber, name, address, latitude, longitude,
       carSlots, bikeSlots, carHourlyRate, bikeHourlyRate,
+      ownerPassword, confirmOwnerPassword,
     } = req.body;
     const imageUri = imageDataUrl(req.file) || req.body.imageUri;
     const normalizedName = typeof name === 'string' ? normalizeName(name) : '';
@@ -235,6 +254,9 @@ export const updateOwnerFacility = async (req, res, next) => {
       !Number.isFinite(Number(bikeHourlyRate)) || Number(bikeHourlyRate) < 0
     ) {
       return res.status(400).json({ error: { message: 'Please provide valid hourly rates.' } });
+    }
+    if (ownerPassword && (ownerPassword.length < 6 || ownerPassword !== confirmOwnerPassword)) {
+      return res.status(400).json({ error: { message: 'Owner password must be at least 6 characters and match its confirmation.' } });
     }
 
     const facility = await ParkingFacility.findOne({
@@ -274,6 +296,14 @@ export const updateOwnerFacility = async (req, res, next) => {
       imageUri: imageUri || facility.imageUri,
     };
     await facility.save();
+    if (ownerPassword) {
+      const owner = await User.findById(req.user.userId);
+      if (!owner) {
+        return res.status(404).json({ error: { message: 'Owner account not found.' } });
+      }
+      owner.password = await bcrypt.hash(ownerPassword, 12);
+      await owner.save();
+    }
     return res.status(202).json({ message: 'Update submitted for admin review.' });
   } catch (error) {
     return next(error);

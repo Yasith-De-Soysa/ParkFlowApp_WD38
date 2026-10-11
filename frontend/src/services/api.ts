@@ -152,6 +152,8 @@ class ApiService {
     carHourlyRate: number;
     bikeHourlyRate: number;
     pricingCurrency: 'LKR';
+    ownerPassword: string;
+    confirmOwnerPassword: string;
     imageUri?: string;
   }) {
     const formData = new FormData();
@@ -168,6 +170,8 @@ class ApiService {
     formData.append('bikeAvailableSlots', String(payload.bikeAvailableSlots));
     formData.append('carHourlyRate', String(payload.carHourlyRate));
     formData.append('bikeHourlyRate', String(payload.bikeHourlyRate));
+    formData.append('ownerPassword', payload.ownerPassword);
+    formData.append('confirmOwnerPassword', payload.confirmOwnerPassword);
     appendImage(formData, payload.imageUri, 'image');
 
     return this.api.post('/facilities', formData, {
@@ -231,6 +235,8 @@ class ApiService {
     bikeSlots: number;
     carHourlyRate: number;
     bikeHourlyRate: number;
+    ownerPassword?: string;
+    confirmOwnerPassword?: string;
     imageUri?: string;
     imageFileUri?: string;
   }) {
@@ -245,6 +251,10 @@ class ApiService {
     formData.append('bikeSlots', String(payload.bikeSlots));
     formData.append('carHourlyRate', String(payload.carHourlyRate));
     formData.append('bikeHourlyRate', String(payload.bikeHourlyRate));
+    if (payload.ownerPassword) {
+      formData.append('ownerPassword', payload.ownerPassword);
+      formData.append('confirmOwnerPassword', payload.confirmOwnerPassword || '');
+    }
     if (payload.imageUri) {
       formData.append('imageUri', payload.imageUri);
     }

@@ -34,6 +34,7 @@ function Field({
   onPress,
   keyboardType = 'default',
   onBlur,
+  secureTextEntry = false,
 }: {
   label: string;
   icon: string;
@@ -43,6 +44,7 @@ function Field({
   onPress?: () => void;
   keyboardType?: 'default' | 'phone-pad' | 'email-address' | 'numeric';
   onBlur?: () => void;
+  secureTextEntry?: boolean;
 }) {
   const input = (
     <View style={styles.input}>
@@ -56,6 +58,7 @@ function Field({
         keyboardType={keyboardType}
         editable={!onPress}
         onBlur={onBlur}
+        secureTextEntry={secureTextEntry}
       />
     </View>
   );
@@ -78,6 +81,8 @@ export default function OwnerRegistrationScreen({ navigation }: { navigation: an
   const [bikeSlots, setBikeSlots] = useState('');
   const [carHourlyRate, setCarHourlyRate] = useState('');
   const [bikeHourlyRate, setBikeHourlyRate] = useState('');
+  const [ownerPassword, setOwnerPassword] = useState('');
+  const [confirmOwnerPassword, setConfirmOwnerPassword] = useState('');
   const [imageUri, setImageUri] = useState<string>();
   const [nameAvailability, setNameAvailability] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
   const [submitting, setSubmitting] = useState(false);
@@ -175,6 +180,10 @@ export default function OwnerRegistrationScreen({ navigation }: { navigation: an
       Alert.alert('Invalid pricing', 'Please enter valid hourly charges for both car and bike slots.');
       return;
     }
+    if (ownerPassword.length < 6 || ownerPassword !== confirmOwnerPassword) {
+      Alert.alert('Invalid password', 'Owner password must be at least 6 characters and match its confirmation.');
+      return;
+    }
     setSubmitting(true);
     try {
       const nameCheck = await api.checkFacilityName(facilityName);
@@ -196,6 +205,9 @@ export default function OwnerRegistrationScreen({ navigation }: { navigation: an
         bikeSlots: Number(bikeSlots) || 0,
         carHourlyRate: Number(carHourlyRate),
         bikeHourlyRate: Number(bikeHourlyRate),
+        pricingCurrency: 'LKR',
+        ownerPassword,
+        confirmOwnerPassword,
         imageUri,
       });
       Alert.alert('Submitted for review', 'We will verify your facility details before it goes live.', [
@@ -309,6 +321,23 @@ export default function OwnerRegistrationScreen({ navigation }: { navigation: an
             />
           </View>
         </View>
+
+        <Field
+          label="Owner password"
+          icon="●"
+          placeholder="At least 6 characters"
+          value={ownerPassword}
+          onChangeText={setOwnerPassword}
+          secureTextEntry
+        />
+        <Field
+          label="Confirm owner password"
+          icon="●"
+          placeholder="Re-enter password"
+          value={confirmOwnerPassword}
+          onChangeText={setConfirmOwnerPassword}
+          secureTextEntry
+        />
 
         <View style={styles.slotRow}>
           <View style={styles.slot}>
